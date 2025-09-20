@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Nexus.Context\Nexus.Context.csproj" />
     <ProjectReference Include="..\Nexus.Entity\Nexus.Entity.csproj" />
     <ProjectReference Include="..\Nexus.Repository.Contract\Nexus.Repository.Contract.csproj" />
