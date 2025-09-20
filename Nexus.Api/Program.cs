@@ -13,7 +13,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<NexusDbContext>(options => options.UseNpgsql("name=ConnectionStrings:DefaultConnection"));
 
-//Rate Limiter
+// Rate Limiter
 builder.Services.AddRateLimiter(options =>
 {
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
