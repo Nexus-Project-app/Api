@@ -1,0 +1,29 @@
+<Project>
+  <PropertyGroup>
+	<!--If you want to target .NET 8, uncomment the below line and adjust the Directory.Packages.props file.
+	You will also need to update the Dockerfile to use .NET 8 instead of .NET 10 - both are in Web.Api project.-->
+    <!--<TargetFramework>net8.0</TargetFramework>-->
+
+	<!--If you want to target .NET 9, uncomment the below line and adjust the Directory.Packages.props file.
+	You will also need to update the Dockerfile to use .NET 9 instead of .NET 10 - both are in Web.Api project.-->
+	<!--<TargetFramework>net9.0</TargetFramework>-->
+
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>All</AnalysisMode>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+	<NoWarn>NU1608</NoWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'">
+    <PackageReference Include="SonarAnalyzer.CSharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>
