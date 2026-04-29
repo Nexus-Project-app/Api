@@ -1,0 +1,14 @@
+using SharedKernel;
+
+namespace Domain.Posts;
+
+public static class PostErrors
+{
+    public static Error NotFound(Guid postId) => Error.NotFound(
+        "Users.NotFound",
+        $"Le post avec l'id = '{postId}' n'a pas été trouvé");
+
+    public static Error Unauthorized() => Error.Failure(
+        "Users.Unauthorized",
+        "You are not authorized to perform this action.");
+}

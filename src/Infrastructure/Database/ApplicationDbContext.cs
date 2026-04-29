@@ -1,4 +1,6 @@
 ﻿using Application.Abstractions.Data;
+using Domain.Posts;
+using Domain.Tags;
 using Domain.Todos;
 using Domain.Users;
 using Infrastructure.DomainEvents;
@@ -15,6 +17,10 @@ public sealed class ApplicationDbContext(
     public DbSet<User> Users { get; set; }
 
     public DbSet<TodoItem> TodoItems { get; set; }
+
+    public DbSet<Post> Posts { get; set; }
+
+    public DbSet<Tag> Tags { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
