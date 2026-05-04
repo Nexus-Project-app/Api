@@ -29,7 +29,6 @@ internal sealed class CreatePostCommandHandler(
             AuthorId = userContext.UserId,
             Tags = tags,
             Created = now,
-            Updated = now
         };
 
         post.Raise(new PostCreatedDomainEvent(post.Id));
