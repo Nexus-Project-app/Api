@@ -13,7 +13,7 @@ internal sealed class GetPostByIdQueryHandler(IApplicationDbContext context, IUs
     public async Task<Result<PostResponse>> Handle(GetPostByIdQuery query, CancellationToken cancellationToken)
     {
         PostResponse? post = await context.Posts
-            .Where(p => p.Id == query.PostId && p.AuthorId == userContext.UserId)
+            .Where(p => p.Id == query.PostId && p.AuthorId == userContext.UserId && p.Deleted == null)
             .Select(p => new PostResponse
             {
                 Id = p.Id,
