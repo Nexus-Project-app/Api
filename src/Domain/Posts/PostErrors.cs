@@ -8,6 +8,10 @@ public static class PostErrors
         "Users.NotFound",
         $"Le post avec l'id = '{postId}' n'a pas été trouvé");
 
+    public static Error Deleted(Guid postId) => Error.Conflict(
+        "Posts.Deleted",
+        $"Le post avec l'id = '{postId}' a été supprimé");
+
     public static Error Unauthorized() => Error.Failure(
         "Users.Unauthorized",
         "You are not authorized to perform this action.");

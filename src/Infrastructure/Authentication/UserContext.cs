@@ -18,4 +18,7 @@ internal sealed class UserContext : IUserContext
             .User
             .GetUserId() ??
         throw new UserContextUnavailableException();
+
+    public bool IsAdmin =>
+        _httpContextAccessor.HttpContext?.User.IsInRole("admin") ?? false;
 }
