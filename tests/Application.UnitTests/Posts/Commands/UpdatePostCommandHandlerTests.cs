@@ -120,6 +120,6 @@ public sealed class UpdatePostCommandHandlerTests
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.Failure);
-        result.Error.Code.ShouldBe("Users.Unauthorized");
+        result.Error.Code.ShouldBe("Posts.Unauthorized");
     }
 }
