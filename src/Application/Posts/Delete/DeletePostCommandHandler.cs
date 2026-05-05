@@ -26,14 +26,14 @@ internal sealed class DeletePostCommandHandler(
             return Result.Failure<Guid>(PostErrors.NotFound(command.Id));
         }
 
-        if (post.Deleted is not null)
-        {
-            return Result.Failure<Guid>(PostErrors.Deleted(command.Id));
-        }
-
         if (post.AuthorId != userContext.UserId)
         {
             return Result.Failure<Guid>(PostErrors.Unauthorized());
+        }
+
+        if (post.Deleted is not null)
+        {
+            return Result.Failure<Guid>(PostErrors.Deleted(command.Id));
         }
 
         post.Deleted = now;
