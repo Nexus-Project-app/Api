@@ -417,3 +417,9 @@ dotnet_diagnostic.S6605.severity = none
 
 # S6781: JWT secret keys should not be disclosed
 dotnet_diagnostic.S6781.severity = none
+
+# Auto-generated EF Core migrations: do not enforce style rules
+[**/Migrations/**.cs]
+generated_code = true
+dotnet_diagnostic.IDE0161.severity = none
+dotnet_analyzer_diagnostic.severity = none
