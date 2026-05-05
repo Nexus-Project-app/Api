@@ -28,12 +28,12 @@ public sealed class GetPostsByUserQueryHandlerTests
             new Post { Id = Guid.NewGuid(), AuthorId = otherUserId, Created = new DateTime(2026, 1, 3, 0, 0, 0, DateTimeKind.Utc), Tags = [] }
         };
 
-        DbSet<Post> postsDbSet = posts.AsQueryable().BuildMockDbSet();
+        var postsDbSet = posts.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostsByUserQuery(targetUserId, Page: 1, PageSize: 10);
 
-        Result<PagedList<PostResponse>> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.TotalCount.ShouldBe(2);
@@ -50,12 +50,12 @@ public sealed class GetPostsByUserQueryHandlerTests
             new Post { Id = Guid.NewGuid(), AuthorId = Guid.NewGuid(), Tags = [] }
         };
 
-        DbSet<Post> postsDbSet = posts.AsQueryable().BuildMockDbSet();
+        var postsDbSet = posts.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostsByUserQuery(targetUserId, Page: 1, PageSize: 10);
 
-        Result<PagedList<PostResponse>> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.Items.ShouldBeEmpty();
@@ -72,12 +72,12 @@ public sealed class GetPostsByUserQueryHandlerTests
             new Post { Id = Guid.NewGuid(), AuthorId = targetUserId, Created = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), Tags = [], Deleted = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc) }
         };
 
-        DbSet<Post> postsDbSet = posts.AsQueryable().BuildMockDbSet();
+        var postsDbSet = posts.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostsByUserQuery(targetUserId, Page: 1, PageSize: 10);
 
-        Result<PagedList<PostResponse>> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.TotalCount.ShouldBe(1);

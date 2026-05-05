@@ -15,7 +15,7 @@ internal sealed class Delete : IEndpoint
                 ICommandHandler<DeletePostCommand, Guid> handler,
                 CancellationToken cancellationToken) =>
             {
-                Result<Guid> result = await handler.Handle(new DeletePostCommand { Id = id }, cancellationToken);
+                var result = await handler.Handle(new DeletePostCommand { Id = id }, cancellationToken);
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })

@@ -14,7 +14,7 @@ internal sealed class TagService(IApplicationDbContext context) : ITagService
             .Distinct()
             .ToList();
 
-        List<Tag> existing = await context.Tags
+        var existing = await context.Tags
             .Where(t => names.Contains(t.Name))
             .ToListAsync(cancellationToken);
 

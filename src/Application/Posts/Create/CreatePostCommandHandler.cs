@@ -17,9 +17,9 @@ internal sealed class CreatePostCommandHandler(
 {
     public async Task<Result<Guid>> Handle(CreatePostCommand command, CancellationToken cancellationToken)
     {
-        DateTime now = dateTimeProvider.UtcNow;
+        var now = dateTimeProvider.UtcNow;
 
-        List<Tag> tags = await tagService.ResolveTagsAsync(command.Tags, cancellationToken);
+        var tags = await tagService.ResolveTagsAsync(command.Tags, cancellationToken);
 
         var post = new Post
         {

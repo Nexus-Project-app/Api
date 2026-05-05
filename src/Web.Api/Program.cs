@@ -7,7 +7,7 @@ using Serilog;
 using Web.Api;
 using Web.Api.Extensions;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.ReadFrom.Configuration(context.Configuration));
 
@@ -20,7 +20,7 @@ builder.Services
 
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
 
-WebApplication app = builder.Build();
+var app = builder.Build();
 
 app.MapEndpoints();
 

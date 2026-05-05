@@ -17,7 +17,7 @@ public sealed class CreatePostCommandValidatorTests
             Tags = ["dotnet"]
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeTrue();
     }
@@ -32,7 +32,7 @@ public sealed class CreatePostCommandValidatorTests
             Tags = []
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(CreatePostCommand.Title));
@@ -48,7 +48,7 @@ public sealed class CreatePostCommandValidatorTests
             Tags = []
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(CreatePostCommand.Title));
@@ -64,7 +64,7 @@ public sealed class CreatePostCommandValidatorTests
             Tags = []
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(CreatePostCommand.Content));
@@ -80,7 +80,7 @@ public sealed class CreatePostCommandValidatorTests
             Tags = []
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(CreatePostCommand.Content));
@@ -96,7 +96,7 @@ public sealed class CreatePostCommandValidatorTests
             Tags = null!
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(CreatePostCommand.Tags));
@@ -112,7 +112,7 @@ public sealed class CreatePostCommandValidatorTests
             Tags = [string.Empty]
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName.StartsWith("Tags["));
@@ -128,7 +128,7 @@ public sealed class CreatePostCommandValidatorTests
             Tags = [new string('a', 51)]
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName.StartsWith("Tags["));

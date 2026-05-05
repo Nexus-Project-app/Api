@@ -49,11 +49,11 @@ public sealed class UpdatePostCommandHandlerTests
         _userContext.UserId.Returns(authorId);
         _dateTimeProvider.UtcNow.Returns(now);
 
-        DbSet<Post> postsDbSet = new List<Post> { existingPost }.AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post> { existingPost }.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
         _context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
-        Result result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         existingPost.Title.ShouldBe("New Title");
@@ -67,10 +67,10 @@ public sealed class UpdatePostCommandHandlerTests
     {
         UpdatePostCommand command = new() { PostId = Guid.NewGuid(), Title = "Title" };
 
-        DbSet<Post> postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
-        Result result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.NotFound);
@@ -91,10 +91,10 @@ public sealed class UpdatePostCommandHandlerTests
 
         _userContext.UserId.Returns(authorId);
 
-        DbSet<Post> postsDbSet = new List<Post> { deletedPost }.AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post> { deletedPost }.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
-        Result result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.Conflict);
@@ -113,10 +113,10 @@ public sealed class UpdatePostCommandHandlerTests
 
         _userContext.UserId.Returns(Guid.NewGuid());
 
-        DbSet<Post> postsDbSet = new List<Post> { existingPost }.AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post> { existingPost }.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
-        Result result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.Failure);
