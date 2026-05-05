@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Authentication;
+using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Domain.Users;
@@ -17,7 +17,7 @@ internal sealed class GetUserByIdQueryHandler(IApplicationDbContext context, IUs
             return Result.Failure<UserResponse>(UserErrors.Unauthorized());
         }
 
-        UserResponse? user = await context.Users
+        var user = await context.Users
             .Where(u => u.Id == query.UserId)
             .Select(u => new UserResponse
             {

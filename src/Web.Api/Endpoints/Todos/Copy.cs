@@ -26,9 +26,9 @@ internal sealed class Copy : IEndpoint
             {
                 UserId = request.UserId,
                 TodoId = todoId
-            };
-
-            Result<Guid> result = await handler.Handle(command, cancellationToken);
+            }; 
+            
+            var result = await handler.Handle(command, cancellationToken);
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })

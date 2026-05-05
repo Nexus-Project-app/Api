@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Authentication;
+using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Domain.Todos;
@@ -12,7 +12,7 @@ internal sealed class GetTodoByIdQueryHandler(IApplicationDbContext context, IUs
 {
     public async Task<Result<TodoResponse>> Handle(GetTodoByIdQuery query, CancellationToken cancellationToken)
     {
-        TodoResponse? todo = await context.TodoItems
+        var todo = await context.TodoItems
             .Where(todoItem => todoItem.Id == query.TodoItemId && todoItem.UserId == userContext.UserId)
             .Select(todoItem => new TodoResponse
             {
