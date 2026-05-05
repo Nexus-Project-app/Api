@@ -93,5 +93,5 @@ jobs:
       - name: Pull & redeploy
         working-directory: ${{ env.COMPOSE_DIR }}
         run: |
-          docker compose pull
+          docker compose pull nexus-api
           docker compose up -d --remove-orphans
