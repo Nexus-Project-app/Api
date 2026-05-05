@@ -9,8 +9,8 @@ namespace Application.Posts.Delete;
 
 internal sealed class DeletePostCommandHandler(
     IApplicationDbContext context,
-    IDateTimeProvider dateTimeProvider
-    ) :
+    IDateTimeProvider dateTimeProvider,
+    IUserContext userContext) :
     ICommandHandler<DeletePostCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(DeletePostCommand command, CancellationToken cancellationToken)
@@ -30,8 +30,15 @@ internal sealed class DeletePostCommandHandler(
         {
             return Result.Failure<Guid>(PostErrors.Deleted(command.Id));
         }
-        
-        post.Deleted = now; await context.SaveChangesAsync(cancellationToken);
+
+        if (post.AuthorId != userContext.UserId)
+        {
+            return Result.Failure<Guid>(PostErrors.Unauthorized());
+        }
+
+        post.Deleted = now;
+
+        await context.SaveChangesAsync(cancellationToken);
         
         return post.Id;
     }
