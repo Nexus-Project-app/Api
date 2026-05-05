@@ -80,7 +80,7 @@ jobs:
     name: Deploy Nexus API
     runs-on: [self-hosted, nexus, api]
     needs: docker
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     env:
       COMPOSE_DIR: /opt/nexus
     steps:
