@@ -49,7 +49,7 @@ public sealed class CreatePostCommandHandlerTests
         _tagService.ResolveTagsAsync(tagNames, Arg.Any<CancellationToken>())
                    .Returns(resolvedTags);
 
-        DbSet<Post> postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
         _context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
@@ -57,7 +57,7 @@ public sealed class CreatePostCommandHandlerTests
         postsDbSet.When(x => x.Add(Arg.Any<Post>()))
                   .Do(ci => capturedPost = ci.Arg<Post>());
 
-        Result<Guid> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldNotBe(Guid.Empty);

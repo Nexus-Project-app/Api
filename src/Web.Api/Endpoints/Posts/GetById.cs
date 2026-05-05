@@ -17,7 +17,7 @@ internal sealed class GetById : IEndpoint
         {
             var query = new GetPostByIdQuery(id);
 
-            Result<PostResponse> result = await handler.Handle(query, cancellationToken);
+            var result = await handler.Handle(query, cancellationToken);
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })

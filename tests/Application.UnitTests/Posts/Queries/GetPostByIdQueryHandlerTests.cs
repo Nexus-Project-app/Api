@@ -34,12 +34,12 @@ public sealed class GetPostByIdQueryHandlerTests
 
         _userContext.UserId.Returns(authorId);
 
-        DbSet<Post> postsDbSet = new List<Post> { post }.AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post> { post }.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostByIdQuery(post.Id);
 
-        Result<PostResponse> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.Id.ShouldBe(post.Id);
@@ -56,12 +56,12 @@ public sealed class GetPostByIdQueryHandlerTests
     {
         _userContext.UserId.Returns(Guid.NewGuid());
 
-        DbSet<Post> postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostByIdQuery(Guid.NewGuid());
 
-        Result<PostResponse> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.NotFound);
@@ -79,12 +79,12 @@ public sealed class GetPostByIdQueryHandlerTests
 
         _userContext.UserId.Returns(Guid.NewGuid());
 
-        DbSet<Post> postsDbSet = new List<Post> { post }.AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post> { post }.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostByIdQuery(post.Id);
 
-        Result<PostResponse> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.NotFound);
@@ -104,12 +104,12 @@ public sealed class GetPostByIdQueryHandlerTests
 
         _userContext.UserId.Returns(authorId);
 
-        DbSet<Post> postsDbSet = new List<Post> { post }.AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post> { post }.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostByIdQuery(post.Id);
 
-        Result<PostResponse> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.NotFound);

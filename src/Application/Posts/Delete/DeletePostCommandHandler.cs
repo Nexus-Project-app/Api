@@ -15,12 +15,12 @@ internal sealed class DeletePostCommandHandler(
 {
     public async Task<Result<Guid>> Handle(DeletePostCommand command, CancellationToken cancellationToken)
     {
-        DateTime now = dateTimeProvider.UtcNow;
-        
-        Post? post = await context.Posts
+        var now = dateTimeProvider.UtcNow;
+
+        var post = await context.Posts
             .Include(p => p.Tags)
             .SingleOrDefaultAsync(p => p.Id == command.Id, cancellationToken);
-       
+
         if (post is null)
         {
             return Result.Failure<Guid>(PostErrors.NotFound(command.Id));
@@ -35,11 +35,10 @@ internal sealed class DeletePostCommandHandler(
         {
             return Result.Failure<Guid>(PostErrors.Deleted(command.Id));
         }
-
-        post.Deleted = now;
-
-        await context.SaveChangesAsync(cancellationToken);
         
+        post.Deleted = now;
+        await context.SaveChangesAsync(cancellationToken);
+
         return post.Id;
     }
 }

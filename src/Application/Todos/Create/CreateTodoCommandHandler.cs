@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Authentication;
+using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Domain.Todos;
@@ -21,7 +21,7 @@ internal sealed class CreateTodoCommandHandler(
             return Result.Failure<Guid>(UserErrors.Unauthorized());
         }
 
-        User? user = await context.Users.AsNoTracking()
+        var user = await context.Users.AsNoTracking()
             .SingleOrDefaultAsync(u => u.Id == command.UserId, cancellationToken);
 
         if (user is null)

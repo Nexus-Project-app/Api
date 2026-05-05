@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Data;
+using Application.Abstractions.Data;
 using Domain.Posts;
 using Domain.Tags;
 using Domain.Todos;
@@ -41,8 +41,8 @@ public sealed class ApplicationDbContext(
         //     - eventual consistency
         //     - handlers can fail
 
-        List<IDomainEvent> domainEvents = ExtractDomainEvents();
-        int result = await base.SaveChangesAsync(cancellationToken);
+        var domainEvents = ExtractDomainEvents();
+        var result = await base.SaveChangesAsync(cancellationToken);
 
         await PublishDomainEventsAsync(domainEvents);
 
@@ -61,7 +61,7 @@ public sealed class ApplicationDbContext(
             .Select(entry => entry.Entity)
             .SelectMany(entity =>
             {
-                List<IDomainEvent> domainEvents = entity.DomainEvents;
+                var domainEvents = entity.DomainEvents;
 
                 entity.ClearDomainEvents();
 

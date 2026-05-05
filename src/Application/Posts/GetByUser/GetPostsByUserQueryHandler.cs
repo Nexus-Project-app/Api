@@ -11,13 +11,13 @@ internal sealed class GetPostsByUserQueryHandler(IApplicationDbContext context)
 {
     public async Task<Result<PagedList<PostResponse>>> Handle(GetPostsByUserQuery query, CancellationToken cancellationToken)
     {
-        IQueryable<Domain.Posts.Post> baseQuery = context.Posts
+        var baseQuery = context.Posts
             .Where(p => p.AuthorId == query.UserId && p.Deleted == null)
             .OrderByDescending(p => p.Created);
 
-        int totalCount = await baseQuery.CountAsync(cancellationToken);
+        var totalCount = await baseQuery.CountAsync(cancellationToken);
 
-        List<PostResponse> items = await baseQuery
+        var items = await baseQuery
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .Select(p => new PostResponse

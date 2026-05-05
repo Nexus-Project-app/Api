@@ -36,11 +36,11 @@ public sealed class DeletePostCommandHandlerTests
         _dateTimeProvider.UtcNow.Returns(now);
         _userContext.UserId.Returns(authorId);
 
-        DbSet<Post> postsDbSet = new List<Post> { existingPost }.AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post> { existingPost }.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
         _context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
-        Result<Guid> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBe(existingPost.Id);
@@ -53,10 +53,10 @@ public sealed class DeletePostCommandHandlerTests
     {
         DeletePostCommand command = new() { Id = Guid.NewGuid() };
 
-        DbSet<Post> postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
-        Result<Guid> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.NotFound);
@@ -79,10 +79,10 @@ public sealed class DeletePostCommandHandlerTests
         _dateTimeProvider.UtcNow.Returns(new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc));
         _userContext.UserId.Returns(authorId);
 
-        DbSet<Post> postsDbSet = new List<Post> { deletedPost }.AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post> { deletedPost }.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
-        Result<Guid> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.Conflict);

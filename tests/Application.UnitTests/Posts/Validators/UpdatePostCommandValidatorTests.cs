@@ -18,7 +18,7 @@ public sealed class UpdatePostCommandValidatorTests
             Tags = ["dotnet"]
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeTrue();
     }
@@ -34,7 +34,7 @@ public sealed class UpdatePostCommandValidatorTests
             Tags = null
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeTrue();
     }
@@ -48,7 +48,7 @@ public sealed class UpdatePostCommandValidatorTests
             Title = "Title"
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(UpdatePostCommand.PostId));
@@ -63,7 +63,7 @@ public sealed class UpdatePostCommandValidatorTests
             Title = new string('a', 201)
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(UpdatePostCommand.Title));
@@ -78,7 +78,7 @@ public sealed class UpdatePostCommandValidatorTests
             Content = new string('a', 10_001)
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(UpdatePostCommand.Content));
@@ -93,7 +93,7 @@ public sealed class UpdatePostCommandValidatorTests
             Tags = [string.Empty]
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName.StartsWith("Tags["));
@@ -108,7 +108,7 @@ public sealed class UpdatePostCommandValidatorTests
             Tags = [new string('a', 51)]
         };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName.StartsWith("Tags["));

@@ -31,7 +31,7 @@ internal sealed class Update : IEndpoint
                 Tags = request.Tags
             };
 
-            Result result = await handler.Handle(command, cancellationToken);
+            var result = await handler.Handle(command, cancellationToken);
 
             return result.Match(Results.NoContent, CustomResults.Problem);
         })

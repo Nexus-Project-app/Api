@@ -18,7 +18,7 @@ internal sealed class UpdatePostCommandHandler(
 {
     public async Task<Result> Handle(UpdatePostCommand command, CancellationToken cancellationToken)
     {
-        Post? post = await context.Posts
+        var post = await context.Posts
             .Include(p => p.Tags)
             .SingleOrDefaultAsync(p => p.Id == command.PostId, cancellationToken);
 
@@ -49,7 +49,7 @@ internal sealed class UpdatePostCommandHandler(
 
         if (command.Tags is not null)
         {
-            List<Tag> tags = await tagService.ResolveTagsAsync(command.Tags, cancellationToken);
+            var tags = await tagService.ResolveTagsAsync(command.Tags, cancellationToken);
             post.Tags = tags;
         }
 

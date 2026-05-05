@@ -12,7 +12,7 @@ public sealed class DeletePostCommandValidatorTests
     {
         DeletePostCommand command = new() { Id = Guid.NewGuid() };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeTrue();
     }
@@ -22,7 +22,7 @@ public sealed class DeletePostCommandValidatorTests
     {
         DeletePostCommand command = new() { Id = Guid.Empty };
 
-        ValidationResult result = _validator.Validate(command);
+        var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(DeletePostCommand.Id));

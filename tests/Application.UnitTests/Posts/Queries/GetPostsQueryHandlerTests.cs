@@ -25,12 +25,12 @@ public sealed class GetPostsQueryHandlerTests
             new Post { Id = Guid.NewGuid(), Created = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), Tags = [] }
         };
 
-        DbSet<Post> postsDbSet = posts.AsQueryable().BuildMockDbSet();
+        var postsDbSet = posts.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostsQuery(Page: 1, PageSize: 2);
 
-        Result<PagedList<PostResponse>> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.TotalCount.ShouldBe(3);
@@ -43,12 +43,12 @@ public sealed class GetPostsQueryHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnEmptyList_WhenNoPostsExist()
     {
-        DbSet<Post> postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
+        var postsDbSet = new List<Post>().AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostsQuery(Page: 1, PageSize: 10);
 
-        Result<PagedList<PostResponse>> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.Items.ShouldBeEmpty();
@@ -64,12 +64,12 @@ public sealed class GetPostsQueryHandlerTests
             new Post { Id = Guid.NewGuid(), Created = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), Tags = [], Deleted = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc) }
         };
 
-        DbSet<Post> postsDbSet = posts.AsQueryable().BuildMockDbSet();
+        var postsDbSet = posts.AsQueryable().BuildMockDbSet();
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostsQuery(Page: 1, PageSize: 10);
 
-        Result<PagedList<PostResponse>> result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.TotalCount.ShouldBe(1);
