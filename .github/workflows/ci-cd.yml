@@ -218,7 +218,7 @@ jobs:
 
       - name: Apply migrations
         run: |
-          psql "$(cat /run/secrets/db_connection_string)" \
+          psql "$(cat /opt/nexus/secrets/db_connection_string)" \
             -f /tmp/nexus-migrations/migrations.sql
 
   # ────────────────────────────────────────────────────────────────────────────
