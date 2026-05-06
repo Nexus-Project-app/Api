@@ -129,7 +129,7 @@ jobs:
   # ────────────────────────────────────────────────────────────────────────────
   docker:
     name: Build & Push Docker Image
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, nexus, api]
     needs: migrations
     permissions:
       contents: read
