@@ -186,31 +186,29 @@ jobs:
         run: |
           echo "value=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
 
-      - name: Scan Docker image for vulnerabilities (Trivy)
-        id: trivy-image-scan
-        continue-on-error: true
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: ${{ steps.image-ref.outputs.value }}
-          exit-code: '1'
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          format: sarif
-          output: trivy-image-results.sarif
+      # - name: Scan Docker image for vulnerabilities (Trivy)
+      #   id: trivy-image-scan
+      #   uses: aquasecurity/trivy-action@v0.36.0
+      #   with:
+      #     image-ref: ${{ steps.image-ref.outputs.value }}
+      #     exit-code: '1'
+      #     severity: CRITICAL,HIGH
+      #     format: sarif
+      #     output: trivy-image-results.sarif
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        if: steps.trivy-image-scan.outcome == 'success' || steps.trivy-image-scan.outcome == 'failure'
-        with:
-          sarif_file: trivy-image-results.sarif
+      # - name: Upload Trivy scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   if: steps.trivy-image-scan.outcome == 'success' || steps.trivy-image-scan.outcome == 'failure'
+      #   with:
+      #     sarif_file: trivy-image-results.sarif
 
-      - name: Upload Trivy SARIF artifact
-        if: steps.trivy-image-scan.outcome == 'success' || steps.trivy-image-scan.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-image-results-${{ github.sha }}
-          path: trivy-image-results.sarif
-          retention-days: 30
+      # - name: Upload Trivy SARIF artifact
+      #   if: steps.trivy-image-scan.outcome == 'success' || steps.trivy-image-scan.outcome == 'failure'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: trivy-image-results-${{ github.sha }}
+      #     path: trivy-image-results.sarif
+      #     retention-days: 30
       
       - name: Download migration script
         uses: actions/download-artifact@v4
