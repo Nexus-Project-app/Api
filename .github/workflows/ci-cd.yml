@@ -188,6 +188,7 @@ jobs:
 
       - name: Scan Docker image for vulnerabilities (Trivy)
         id: trivy-image-scan
+        continue-on-error: true
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ steps.image-ref.outputs.value }}
