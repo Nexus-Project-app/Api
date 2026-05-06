@@ -183,6 +183,7 @@ jobs:
             
       - name: Generate and apply migrations
         run: |
+          dotnet restore ${{ env.SOLUTION }}
           $HOME/.dotnet/tools/dotnet-ef migrations script \
             --idempotent \
             --output /tmp/migrations.sql \
