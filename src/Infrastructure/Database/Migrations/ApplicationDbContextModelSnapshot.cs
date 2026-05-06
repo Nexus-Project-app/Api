@@ -19,10 +19,76 @@ namespace Infrastructure.Database.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("public")
-                .HasAnnotation("ProductVersion", "8.0.7")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Domain.Posts.Post", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created");
+
+                    b.Property<DateTime?>("Deleted")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated");
+
+                    b.HasKey("Id")
+                        .HasName("pk_posts");
+
+                    b.HasIndex("AuthorId")
+                        .HasDatabaseName("ix_posts_author_id");
+
+                    b.ToTable("posts", "public");
+                });
+
+            modelBuilder.Entity("Domain.Tags.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tags");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tags_name");
+
+                    b.ToTable("tags", "public");
+                });
 
             modelBuilder.Entity("Domain.Todos.TodoItem", b =>
                 {
@@ -52,7 +118,7 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_completed");
 
-                    b.Property<List<string>>("Labels")
+                    b.PrimitiveCollection<List<string>>("Labels")
                         .IsRequired()
                         .HasColumnType("text[]")
                         .HasColumnName("labels");
@@ -111,6 +177,35 @@ namespace Infrastructure.Database.Migrations
                     b.ToTable("users", "public");
                 });
 
+            modelBuilder.Entity("PostTag", b =>
+                {
+                    b.Property<Guid>("PostsId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("posts_id");
+
+                    b.Property<Guid>("TagsId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tags_id");
+
+                    b.HasKey("PostsId", "TagsId")
+                        .HasName("pk_post_tags");
+
+                    b.HasIndex("TagsId")
+                        .HasDatabaseName("ix_post_tags_tags_id");
+
+                    b.ToTable("post_tags", "public");
+                });
+
+            modelBuilder.Entity("Domain.Posts.Post", b =>
+                {
+                    b.HasOne("Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_posts_users_author_id");
+                });
+
             modelBuilder.Entity("Domain.Todos.TodoItem", b =>
                 {
                     b.HasOne("Domain.Users.User", null)
@@ -119,6 +214,23 @@ namespace Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_todo_items_users_user_id");
+                });
+
+            modelBuilder.Entity("PostTag", b =>
+                {
+                    b.HasOne("Domain.Posts.Post", null)
+                        .WithMany()
+                        .HasForeignKey("PostsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_post_tags_posts_posts_id");
+
+                    b.HasOne("Domain.Tags.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_post_tags_tags_tags_id");
                 });
 #pragma warning restore 612, 618
         }

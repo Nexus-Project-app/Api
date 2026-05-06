@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Messaging;
+using Application.Abstractions.Messaging;
 using FluentValidation;
 using FluentValidation.Results;
 using SharedKernel;
@@ -15,7 +15,7 @@ internal static class ValidationDecorator
     {
         public async Task<Result<TResponse>> Handle(TCommand command, CancellationToken cancellationToken)
         {
-            ValidationFailure[] validationFailures = await ValidateAsync(command, validators);
+            var validationFailures = await ValidateAsync(command, validators);
 
             if (validationFailures.Length == 0)
             {
@@ -34,7 +34,7 @@ internal static class ValidationDecorator
     {
         public async Task<Result> Handle(TCommand command, CancellationToken cancellationToken)
         {
-            ValidationFailure[] validationFailures = await ValidateAsync(command, validators);
+            var validationFailures = await ValidateAsync(command, validators);
 
             if (validationFailures.Length == 0)
             {
@@ -56,10 +56,10 @@ internal static class ValidationDecorator
 
         var context = new ValidationContext<TCommand>(command);
 
-        ValidationResult[] validationResults = await Task.WhenAll(
+        var validationResults = await Task.WhenAll(
             validators.Select(validator => validator.ValidateAsync(context)));
 
-        ValidationFailure[] validationFailures = validationResults
+        var validationFailures = validationResults
             .Where(validationResult => !validationResult.IsValid)
             .SelectMany(validationResult => validationResult.Errors)
             .ToArray();

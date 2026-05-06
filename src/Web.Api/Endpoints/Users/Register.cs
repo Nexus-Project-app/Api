@@ -23,7 +23,7 @@ internal sealed class Register : IEndpoint
                 request.LastName,
                 request.Password);
 
-            Result<Guid> result = await handler.Handle(command, cancellationToken);
+            var result = await handler.Handle(command, cancellationToken);
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })

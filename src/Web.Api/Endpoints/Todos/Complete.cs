@@ -17,7 +17,7 @@ internal sealed class Complete : IEndpoint
         {
             var command = new CompleteTodoCommand(id);
 
-            Result result = await handler.Handle(command, cancellationToken);
+            var result = await handler.Handle(command, cancellationToken);
 
             return result.Match(Results.NoContent, CustomResults.Problem);
         })

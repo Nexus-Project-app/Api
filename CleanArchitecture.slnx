@@ -13,6 +13,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ArchitectureTests/ArchitectureTests.csproj" />
+    <Project Path="tests/Application.UnitTests/Application.UnitTests.csproj" />
   </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />

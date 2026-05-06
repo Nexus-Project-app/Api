@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Messaging;
+using Application.Abstractions.Messaging;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using SharedKernel;
@@ -15,11 +15,11 @@ internal static class LoggingDecorator
     {
         public async Task<Result<TResponse>> Handle(TCommand command, CancellationToken cancellationToken)
         {
-            string commandName = typeof(TCommand).Name;
+            var commandName = typeof(TCommand).Name;
 
             logger.LogInformation("Processing command {Command}", commandName);
 
-            Result<TResponse> result = await innerHandler.Handle(command, cancellationToken);
+            var result = await innerHandler.Handle(command, cancellationToken);
 
             if (result.IsSuccess)
             {
@@ -45,11 +45,11 @@ internal static class LoggingDecorator
     {
         public async Task<Result> Handle(TCommand command, CancellationToken cancellationToken)
         {
-            string commandName = typeof(TCommand).Name;
+            var commandName = typeof(TCommand).Name;
 
             logger.LogInformation("Processing command {Command}", commandName);
 
-            Result result = await innerHandler.Handle(command, cancellationToken);
+            var result = await innerHandler.Handle(command, cancellationToken);
 
             if (result.IsSuccess)
             {
@@ -75,11 +75,11 @@ internal static class LoggingDecorator
     {
         public async Task<Result<TResponse>> Handle(TQuery query, CancellationToken cancellationToken)
         {
-            string queryName = typeof(TQuery).Name;
+            var queryName = typeof(TQuery).Name;
 
             logger.LogInformation("Processing query {Query}", queryName);
 
-            Result<TResponse> result = await innerHandler.Handle(query, cancellationToken);
+            var result = await innerHandler.Handle(query, cancellationToken);
 
             if (result.IsSuccess)
             {

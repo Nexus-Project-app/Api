@@ -1,0 +1,97 @@
+name: CI CD API
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  DOTNET_VERSION: '10.x'
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Listing files
+        run: ls -la
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Restore dependencies
+        run: dotnet restore CleanArchitecture.slnx 2>&1 | tee restore.log
+      - name: Build application
+        run: dotnet build CleanArchitecture.slnx --configuration Release --no-restore 2>&1 | tee build.log
+        if: success()
+      - name: Run tests
+        run: dotnet test CleanArchitecture.slnx --configuration Release --no-restore 2>&1 | tee test.log
+        if: success()
+      - name: Upload build artifact and logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            restore.log
+            build.log
+            test.log
+
+  docker:
+    name: Build & Push Docker Image
+    runs-on: [self-hosted, nexus, api]
+    needs: build-and-test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Build
+        uses: docker/setup-buildx-action@v4
+        
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch,suffix=-latest
+            type=sha,prefix=sha-,format=short
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: src/Web.Api/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: Deploy Nexus API
+    runs-on: [self-hosted, nexus, api]
+    needs: docker
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    env:
+      COMPOSE_DIR: /opt/nexus
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull & redeploy
+        working-directory: ${{ env.COMPOSE_DIR }}
+        run: |
+          docker compose pull nexus-api
+          docker compose up -d --remove-orphans

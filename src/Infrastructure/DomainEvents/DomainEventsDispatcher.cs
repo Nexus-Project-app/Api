@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel;
 
@@ -13,18 +13,18 @@ internal sealed class DomainEventsDispatcher(IServiceProvider serviceProvider) :
         IEnumerable<IDomainEvent> domainEvents,
         CancellationToken cancellationToken = default)
     {
-        foreach (IDomainEvent domainEvent in domainEvents)
+        foreach (var domainEvent in domainEvents)
         {
-            using IServiceScope scope = serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
 
-            Type domainEventType = domainEvent.GetType();
-            Type handlerType = HandlerTypeDictionary.GetOrAdd(
+            var domainEventType = domainEvent.GetType();
+            var handlerType = HandlerTypeDictionary.GetOrAdd(
                 domainEventType,
                 et => typeof(IDomainEventHandler<>).MakeGenericType(et));
 
-            IEnumerable<object?> handlers = scope.ServiceProvider.GetServices(handlerType);
+            var handlers = scope.ServiceProvider.GetServices(handlerType);
 
-            foreach (object? handler in handlers)
+            foreach (var handler in handlers)
             {
                 if (handler is null)
                 {
@@ -44,7 +44,7 @@ internal sealed class DomainEventsDispatcher(IServiceProvider serviceProvider) :
 
         public static HandlerWrapper Create(object handler, Type domainEventType)
         {
-            Type wrapperType = WrapperTypeDictionary.GetOrAdd(
+            var wrapperType = WrapperTypeDictionary.GetOrAdd(
                 domainEventType,
                 et => typeof(HandlerWrapper<>).MakeGenericType(et));
 

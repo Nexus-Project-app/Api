@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Authentication;
+using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Domain.Users;
@@ -17,7 +17,7 @@ internal sealed class GetTodosQueryHandler(IApplicationDbContext context, IUserC
             return Result.Failure<List<TodoResponse>>(UserErrors.Unauthorized());
         }
 
-        List<TodoResponse> todos = await context.TodoItems
+        var todos = await context.TodoItems
             .Where(todoItem => todoItem.UserId == query.UserId)
             .Select(todoItem => new TodoResponse
             {

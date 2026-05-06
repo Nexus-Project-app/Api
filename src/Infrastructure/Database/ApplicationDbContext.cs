@@ -1,4 +1,6 @@
-﻿using Application.Abstractions.Data;
+using Application.Abstractions.Data;
+using Domain.Posts;
+using Domain.Tags;
 using Domain.Todos;
 using Domain.Users;
 using Infrastructure.DomainEvents;
@@ -15,6 +17,10 @@ public sealed class ApplicationDbContext(
     public DbSet<User> Users { get; set; }
 
     public DbSet<TodoItem> TodoItems { get; set; }
+
+    public DbSet<Post> Posts { get; set; }
+
+    public DbSet<Tag> Tags { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,8 +41,8 @@ public sealed class ApplicationDbContext(
         //     - eventual consistency
         //     - handlers can fail
 
-        List<IDomainEvent> domainEvents = ExtractDomainEvents();
-        int result = await base.SaveChangesAsync(cancellationToken);
+        var domainEvents = ExtractDomainEvents();
+        var result = await base.SaveChangesAsync(cancellationToken);
 
         await PublishDomainEventsAsync(domainEvents);
 
@@ -55,7 +61,7 @@ public sealed class ApplicationDbContext(
             .Select(entry => entry.Entity)
             .SelectMany(entity =>
             {
-                List<IDomainEvent> domainEvents = entity.DomainEvents;
+                var domainEvents = entity.DomainEvents;
 
                 entity.ClearDomainEvents();
 

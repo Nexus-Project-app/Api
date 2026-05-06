@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Authentication;
+using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Domain.Users;
@@ -14,7 +14,7 @@ internal sealed class LoginUserCommandHandler(
 {
     public async Task<Result<string>> Handle(LoginUserCommand command, CancellationToken cancellationToken)
     {
-        User? user = await context.Users
+        var user = await context.Users
             .AsNoTracking()
             .SingleOrDefaultAsync(u => u.Email == command.Email, cancellationToken);
 
@@ -23,14 +23,14 @@ internal sealed class LoginUserCommandHandler(
             return Result.Failure<string>(UserErrors.NotFoundByEmail);
         }
 
-        bool verified = passwordHasher.Verify(command.Password, user.PasswordHash);
+        var verified = passwordHasher.Verify(command.Password, user.PasswordHash);
 
         if (!verified)
         {
             return Result.Failure<string>(UserErrors.NotFoundByEmail);
         }
 
-        string token = tokenProvider.Create(user);
+        var token = tokenProvider.Create(user);
 
         return token;
     }

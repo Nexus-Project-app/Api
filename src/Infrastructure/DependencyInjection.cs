@@ -40,7 +40,12 @@ public static class DependencyInjection
 
     private static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
-        string? connectionString = configuration.GetConnectionString("Database");
+        var secretPath = "/run/secrets/db_connection_string";
+    
+        var connectionString = File.Exists(secretPath)
+            ? File.ReadAllText(secretPath).Trim()
+            : configuration.GetConnectionString("Database")
+              ?? throw new InvalidOperationException("Connection string 'Database' not found.");
 
         services.AddDbContext<ApplicationDbContext>(
             options => options

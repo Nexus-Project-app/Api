@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Authorization;
@@ -15,14 +15,14 @@ internal sealed class PermissionAuthorizationPolicyProvider : DefaultAuthorizati
 
     public override async Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
-        AuthorizationPolicy? policy = await base.GetPolicyAsync(policyName);
+        var policy = await base.GetPolicyAsync(policyName);
 
         if (policy is not null)
         {
             return policy;
         }
 
-        AuthorizationPolicy permissionPolicy = new AuthorizationPolicyBuilder()
+        var permissionPolicy = new AuthorizationPolicyBuilder()
             .AddRequirements(new PermissionRequirement(policyName))
             .Build();
 
