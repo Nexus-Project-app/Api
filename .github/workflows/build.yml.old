@@ -1,70 +1,147 @@
-name: Build
+name: CI CD api
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  DOTNET_VERSION: "10.x"
+  DOTNET_VERSION: '10.x'
+  SOLUTION: CleanArchitecture.slnx
+
+# SonarQube runs in automatic continuous analysis mode — not invoked here
 
 jobs:
-  build-and-test:
-    name: Build
+  # ────────────────────────────────────────────────────────────────────────────
+  # Quality gates: restore, build, test, publish, filesystem vulnerability scan
+  # Runs on GitHub-hosted runner for clean, reproducible environment
+  # ────────────────────────────────────────────────────────────────────────────
+  quality:
+    name: Quality Gates
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # required for SARIF upload
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Listing files
-        run: ls -la
+        uses: actions/checkout@v6
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore dependencies
-        run: dotnet restore CleanArchitecture.slnx 2>&1 | tee restore.log
+        run: dotnet restore ${{ env.SOLUTION }} 2>&1 | tee restore.log
 
       - name: Build application
-        run: dotnet build CleanArchitecture.slnx --configuration Release --no-restore 2>&1 | tee build.log
-        if: success()
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release --no-restore 2>&1 | tee build.log
 
       - name: Test application
-        run: dotnet test CleanArchitecture.slnx --configuration Release --no-restore --no-build 2>&1 | tee test.log
-        if: success()
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build --logger "trx;LogFileName=test-results.trx" 2>&1 | tee test.log
 
       - name: Publish application
-        run: dotnet publish CleanArchitecture.slnx --configuration Release --no-restore --no-build --output publish 2>&1 | tee publish.log
-        if: success()
+        run: dotnet publish src/Web.Api/Web.Api.csproj --configuration Release --no-restore --no-build --output publish 2>&1 | tee publish.log
+
+      - name: Scan filesystem for vulnerabilities (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          format: sarif
+          output: trivy-fs-results.sarif
+
+      - name: Upload Trivy filesystem scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: trivy-fs-results.sarif
 
       - name: Upload build artifact and logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-publish
+          name: build-publish-${{ github.sha }}
           path: |
             publish/
             restore.log
             build.log
             test.log
             publish.log
-  
-  docker:
-    name: Build & Push Docker Image
-    runs-on: [self-hosted, nexus, front]
-    needs: build-and-test
+            trivy-fs-results.sarif
+            **/TestResults/*.trx
+          retention-days: 30
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Migrations: Generate script for database schema changes, upload as artifact for deployment step
+  # ────────────────────────────────────────────────────────────────────────────
+  migrations:
+    name: Generate Migration Script
+    runs-on: ubuntu-latest
+    needs: quality
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Set up Docker Build
+      - name: Restore dependencies
+        run: dotnet restore CleanArchitecture.slnx
+
+      - name: Install dotnet-ef tool
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Generate idempotent migration script
+        run: |
+          dotnet ef migrations script \
+            --idempotent \
+            --output migrations.sql \
+            --project src/Infrastructure \
+            --startup-project src/Web.Api \
+            --configuration Release
+
+      - name: Upload migration script
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-script
+          path: migrations.sql
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Docker: build production image, push to GHCR, scan image, attest provenance
+  # ────────────────────────────────────────────────────────────────────────────
+  docker:
+    name: Build & Push Docker Image
+    runs-on: [self-hosted, nexus, back]
+    needs: migrations
+    permissions:
+      contents: read
+      packages: write
+      id-token: write         # required for provenance attestation
+      security-events: write  # required for SARIF upload
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
@@ -76,7 +153,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -86,9 +163,85 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        id: build
+        uses: docker/build-push-action@v7
         with:
           context: .
+          file: src/Web.Api/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: true
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            GIT_REVISION=${{ github.sha }}
+            VERSION=${{ github.ref_name }}
+
+      - name: Set lowercase image ref for Trivy
+        id: image-ref
+        run: |
+          echo "value=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+
+      - name: Scan Docker image for vulnerabilities (Trivy)
+        id: trivy-image-scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.image-ref.outputs.value }}
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          format: sarif
+          output: trivy-image-results.sarif
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: steps.trivy-image-scan.outcome == 'success' || steps.trivy-image-scan.outcome == 'failure'
+        with:
+          sarif_file: trivy-image-results.sarif
+
+      - name: Upload Trivy SARIF artifact
+        if: steps.trivy-image-scan.outcome == 'success' || steps.trivy-image-scan.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-results-${{ github.sha }}
+          path: trivy-image-results.sarif
+          retention-days: 30
+      
+      - name: Download migration script
+        uses: actions/download-artifact@v4
+        with:
+          name: migration-script
+          path: /tmp/nexus-migrations
+
+      - name: Apply migrations
+        run: |
+          psql "$(cat /run/secrets/db_connection_string)" \
+            -f /tmp/nexus-migrations/migrations.sql
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Deploy: pull latest image and redeploy via docker compose
+  # Runs only on push to master (not on PRs)
+  # ────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy Nexus Api
+    runs-on: [self-hosted, nexus, back]
+    needs: docker
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    env:
+      COMPOSE_DIR: /opt/nexus
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PULL_TOKEN }}
+
+      - name: Pull & redeploy
+        working-directory: ${{ env.COMPOSE_DIR }}
+        run: |
+          docker compose pull
+          docker compose up -d --remove-orphans
