@@ -8,7 +8,7 @@ namespace Web.Api.Endpoints.Users;
 
 internal sealed class Login : IEndpoint
 {
-    public sealed record Request(string Email, string Password);
+    public sealed record Request(Guid id);
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -17,7 +17,7 @@ internal sealed class Login : IEndpoint
             ICommandHandler<LoginUserCommand, string> handler,
             CancellationToken cancellationToken) =>
         {
-            var command = new LoginUserCommand(request.Email, request.Password);
+            var command = new LoginUserCommand(request.id);
 
             Result<string> result = await handler.Handle(command, cancellationToken);
 

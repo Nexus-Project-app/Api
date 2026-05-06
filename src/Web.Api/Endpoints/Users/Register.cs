@@ -8,7 +8,7 @@ namespace Web.Api.Endpoints.Users;
 
 internal sealed class Register : IEndpoint
 {
-    public sealed record Request(string Email, string FirstName, string LastName, string Password);
+    public sealed record Request(string Email, string KeycloakId, string FirstName, string LastName);
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -16,17 +16,21 @@ internal sealed class Register : IEndpoint
             Request request,
             ICommandHandler<RegisterUserCommand, Guid> handler,
             CancellationToken cancellationToken) =>
-        {
-            var command = new RegisterUserCommand(
-                request.Email,
-                request.FirstName,
-                request.LastName,
-                request.Password);
+                {
+                    var command = new RegisterUserCommand(
+                        request.Email,
+                        request.KeycloakId,
+                        request.FirstName,
+                        request.LastName
+                    );
 
-            Result<Guid> result = await handler.Handle(command, cancellationToken);
+                    Result<Guid> result = await handler.Handle(command, cancellationToken);
 
-            return result.Match(Results.Ok, CustomResults.Problem);
-        })
+                    return result.Match(
+                        id => Results.Ok(new { id, message = "Utilisateur créé ou existant" }),
+                        CustomResults.Problem
+                    );
+                })
         .WithTags(Tags.Users);
     }
 }

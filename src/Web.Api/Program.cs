@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 using Web.Api;
 using Web.Api.Extensions;
+using Serilog.Formatting.Json;
+
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +54,14 @@ app.MapControllers();
 await app.RunAsync();
 
 // REMARK: Required for functional and integration tests to work.
+
+
+/**
+ * 
+ *  dotnet ef migrations add Init --project src/Infrastructure --startup-project src/Web.Api
+ *  
+ */
+
 namespace Web.Api
 {
     public partial class Program;

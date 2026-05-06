@@ -5,6 +5,7 @@
   <!--.NET 9 packages. Most of them will work on .NET 8. If you need to, make the updates here individually.-->
   <ItemGroup>
     <!-- Static code analysis -->
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.24.0.138807" />
     <!-- Application -->
     <PackageVersion Include="Scrutor" Version="7.0.0" />
