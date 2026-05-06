@@ -188,11 +188,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ${{ env.SOLUTION }}
 
-      - name: Install dotnet-ef tool
-        run: dotnet tool install --global dotnet-ef
-
-      - name: Apply migrations
+      - name: Install dotnet-ef tool and apply migrations
         run: |
+          dotnet tool install --global dotnet-ef
+          export PATH="$PATH:$HOME/.dotnet/tools"
           dotnet ef database update \
             --connection "$(cat /opt/nexus/secrets/db_connection_string)" \
             --project src/Infrastructure \
