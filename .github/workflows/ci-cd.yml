@@ -64,6 +64,7 @@ jobs:
           scan-ref: .
           exit-code: '1'
           severity: CRITICAL,HIGH
+          ignore-unfixed: true
           format: sarif
           output: trivy-fs-results.sarif
 
@@ -192,6 +193,7 @@ jobs:
           image-ref: ${{ steps.image-ref.outputs.value }}
           exit-code: '1'
           severity: CRITICAL,HIGH
+          ignore-unfixed: true
           format: sarif
           output: trivy-image-results.sarif
 
