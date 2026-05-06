@@ -89,12 +89,48 @@ jobs:
           retention-days: 30
 
   # ────────────────────────────────────────────────────────────────────────────
+  # Migrations: Generate script for database schema changes, upload as artifact for deployment step
+  # ────────────────────────────────────────────────────────────────────────────
+  migrations:
+    name: Generate Migration Script
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore CleanArchitecture.slnx
+
+      - name: Install dotnet-ef tool
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Generate idempotent migration script
+        run: |
+          dotnet ef migrations script \
+            --idempotent \
+            --output migrations.sql \
+            --project src/Infrastructure \
+            --startup-project src/Web.Api \
+            --configuration Release
+
+      - name: Upload migration script
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-script
+          path: migrations.sql
+
+  # ────────────────────────────────────────────────────────────────────────────
   # Docker: build production image, push to GHCR, scan image, attest provenance
   # ────────────────────────────────────────────────────────────────────────────
   docker:
     name: Build & Push Docker Image
     runs-on: [self-hosted, nexus, back]
-    needs: quality
+    needs: migrations
     permissions:
       contents: read
       packages: write
@@ -172,6 +208,17 @@ jobs:
           name: trivy-image-results-${{ github.sha }}
           path: trivy-image-results.sarif
           retention-days: 30
+      
+      - name: Download migration script
+        uses: actions/download-artifact@v4
+        with:
+          name: migration-script
+          path: /tmp/nexus-migrations
+
+      - name: Apply migrations
+        run: |
+          psql "$(cat /run/secrets/db_connection_string)" \
+            -f /tmp/nexus-migrations/migrations.sql
 
   # ────────────────────────────────────────────────────────────────────────────
   # Deploy: pull latest image and redeploy via docker compose
