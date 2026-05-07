@@ -3,7 +3,7 @@ using SharedKernel;
 namespace Domain.Posts;
 
 public static class PostErrors
-{
+{   
     public static Error NotFound(Guid postId) => Error.NotFound(
         "Posts.NotFound",
         $"Le post avec l'id = '{postId}' n'a pas été trouvé");
