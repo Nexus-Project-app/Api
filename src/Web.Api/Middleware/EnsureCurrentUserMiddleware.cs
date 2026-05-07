@@ -45,7 +45,7 @@ public sealed class EnsureCurrentUserMiddleware(RequestDelegate next)
                         LastName   = lastName,
                     };
 
-                    dbContext.Users.Add(user);
+                    await dbContext.Users.AddAsync(user);
 
                     try
                     {
