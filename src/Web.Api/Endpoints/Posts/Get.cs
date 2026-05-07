@@ -1,7 +1,6 @@
 using Application.Abstractions.Messaging;
 using Application.Common;
 using Application.Posts.Get;
-using SharedKernel;
 using Web.Api.Extensions;
 using Web.Api.Infrastructure;
 
@@ -23,7 +22,6 @@ internal sealed class Get : IEndpoint
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })
-        .WithTags(Tags.Posts)
-        .RequireAuthorization();
+        .WithTags(Tags.Posts);
     }
 }

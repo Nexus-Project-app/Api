@@ -1,4 +1,3 @@
-using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Domain.Posts;
@@ -7,13 +6,13 @@ using SharedKernel;
 
 namespace Application.Posts.GetById;
 
-internal sealed class GetPostByIdQueryHandler(IApplicationDbContext context, IUserContext userContext)
+internal sealed class GetPostByIdQueryHandler(IApplicationDbContext context)
     : IQueryHandler<GetPostByIdQuery, PostResponse>
 {
     public async Task<Result<PostResponse>> Handle(GetPostByIdQuery query, CancellationToken cancellationToken)
     {
-        PostResponse? post = await context.Posts
-            .Where(p => p.Id == query.PostId && p.AuthorId == userContext.UserId && p.Deleted == null)
+        var post = await context.Posts
+            .Where(p => p.Id == query.PostId && p.Deleted == null)
             .Select(p => new PostResponse
             {
                 Id = p.Id,

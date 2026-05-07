@@ -31,15 +31,15 @@ builder.Services
     {
         options.Authority = "http://localhost:8080/realms/mon-realm";
 
-        options.Audience = "mon-client";
-
         options.RequireHttpsMetadata = false; // dev only
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidAudience = "account"
         };
-        options.MapInboundClaims = false; // IMPORTANT
+
+        // Permet le mapping automatique du claim "sub" vers ClaimTypes.NameIdentifier
+        options.MapInboundClaims = true;
 
 
     });
@@ -89,6 +89,9 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+// Crée automatiquement l'utilisateur local s'il n'existe pas encore (premier login)
+app.UseMiddleware<Web.Api.Middleware.EnsureCurrentUserMiddleware>();
 
 // REMARK: If you want to use Controllers, you'll need this.
 app.MapControllers();
