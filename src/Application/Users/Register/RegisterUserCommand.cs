@@ -2,5 +2,5 @@
 
 namespace Application.Users.Register;
 
-public sealed record RegisterUserCommand(string Email, string FirstName, string LastName, string Password)
+public sealed record RegisterUserCommand(string Email,string KeycloakId,  string FirstName, string LastName)
     : ICommand<Guid>;

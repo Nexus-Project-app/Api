@@ -2,4 +2,4 @@
 
 namespace Application.Users.Login;
 
-public sealed record LoginUserCommand(string Email, string Password) : ICommand<string>;
+public sealed record LoginUserCommand(Guid id) : ICommand<string>;

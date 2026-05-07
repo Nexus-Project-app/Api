@@ -1,4 +1,5 @@
 using Domain.Tags;
+using Domain.Users;
 using SharedKernel;
 
 namespace Domain.Posts;
@@ -12,5 +13,7 @@ public class Post : Entity
     public DateTime Updated { get; set; }
     public DateTime? Deleted { get; set; }
     public Guid AuthorId { get; set; }
+    public User Author { get; set; } = null!;
     public List<Tag> Tags { get; set; } = [];
+    public List<Comment.Comment> Comments { get; set; } = [];
 }

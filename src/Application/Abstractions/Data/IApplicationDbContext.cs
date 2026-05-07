@@ -12,6 +12,7 @@ public interface IApplicationDbContext
     DbSet<TodoItem> TodoItems { get; }
     DbSet<Post> Posts { get; }
     DbSet<Tag> Tags { get; }
+    DbSet<Domain.Comment.Comment> Comments { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
