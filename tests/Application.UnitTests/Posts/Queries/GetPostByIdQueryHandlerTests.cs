@@ -14,7 +14,7 @@ public sealed class GetPostByIdQueryHandlerTests
         _context = Substitute.For<IApplicationDbContext>();
         _userContext = Substitute.For<IUserContext>();
 
-        _handler = new GetPostByIdQueryHandler(_context, _userContext);
+        _handler = new GetPostByIdQueryHandler(_context);
     }
 
     [Fact]
@@ -60,29 +60,6 @@ public sealed class GetPostByIdQueryHandlerTests
         _context.Posts.Returns(postsDbSet);
 
         var query = new GetPostByIdQuery(Guid.NewGuid());
-
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        result.IsFailure.ShouldBeTrue();
-        result.Error.Type.ShouldBe(ErrorType.NotFound);
-    }
-
-    [Fact]
-    public async Task Handle_ShouldReturnNotFound_WhenPostBelongsToAnotherUser()
-    {
-        var post = new Post
-        {
-            Id = Guid.NewGuid(),
-            AuthorId = Guid.NewGuid(),
-            Tags = []
-        };
-
-        _userContext.UserId.Returns(Guid.NewGuid());
-
-        var postsDbSet = new List<Post> { post }.AsQueryable().BuildMockDbSet();
-        _context.Posts.Returns(postsDbSet);
-
-        var query = new GetPostByIdQuery(post.Id);
 
         var result = await _handler.Handle(query, CancellationToken.None);
 
