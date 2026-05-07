@@ -14,7 +14,7 @@ internal sealed class PostConfiguration : IEntityTypeConfiguration<Post>
         builder.Property(p => p.Title).IsRequired().HasMaxLength(200);
         builder.Property(p => p.Content).IsRequired();
 
-        builder.HasOne<User>().WithMany().HasForeignKey(p => p.AuthorId);
+        builder.HasOne(p => p.Author).WithMany().HasForeignKey(p => p.AuthorId);
 
         builder.HasMany(p => p.Tags)
             .WithMany(t => t.Posts)
