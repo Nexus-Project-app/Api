@@ -192,7 +192,7 @@ jobs:
           dotnet tool install --global dotnet-ef
           export PATH="$PATH:$HOME/.dotnet/tools"
           dotnet ef database update \
-            --connection "$(cat /opt/nexus/secrets/db_connection_string)" \
+            --connection ${{ secrets.DB_CONNECTION_STRING }} \
             --project src/Infrastructure \
             --startup-project src/Web.Api \
             --configuration Release
