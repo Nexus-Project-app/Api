@@ -1,8 +1,8 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # Stage 1: Build — SDK image has shell + tooling. Never reaches production.
 # ──────────────────────────────────────────────────────────────────────────────
-#FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine3.23
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS builder
+
 ARG BUILD_CONFIGURATION=Release
 
 WORKDIR /src
@@ -27,7 +27,7 @@ RUN dotnet build "./Web.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 # ──────────────────────────────────────────────────────────────────────────────
 # Stage 2: Publish — produce framework-dependent output, no AppHost wrapper
 # ──────────────────────────────────────────────────────────────────────────────
-FROM build AS publish
+FROM builder AS publish
 
 ARG BUILD_CONFIGURATION=Release
 
