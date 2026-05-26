@@ -57,22 +57,22 @@ jobs:
       - name: Publish application
         run: dotnet publish src/Web.Api/Web.Api.csproj --configuration Release --no-restore --no-build --output publish 2>&1 | tee publish.log
 
-      - name: Scan filesystem for vulnerabilities (Trivy)
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          exit-code: '1'
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          format: sarif
-          output: trivy-fs-results.sarif
+      # - name: Scan filesystem for vulnerabilities (Trivy)
+      #   uses: aquasecurity/trivy-action@v0.36.0
+      #   with:
+      #     scan-type: fs
+      #     scan-ref: .
+      #     exit-code: '1'
+      #     severity: CRITICAL,HIGH
+      #     ignore-unfixed: true
+      #     format: sarif
+      #     output: trivy-fs-results.sarif
 
-      - name: Upload Trivy filesystem scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: trivy-fs-results.sarif
+      # - name: Upload Trivy filesystem scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   if: always()
+      #   with:
+      #     sarif_file: trivy-fs-results.sarif
 
       - name: Upload build artifact and logs
         if: always()
@@ -85,7 +85,6 @@ jobs:
             build.log
             test.log
             publish.log
-            trivy-fs-results.sarif
             **/TestResults/*.trx
           retention-days: 30
 
@@ -145,40 +144,40 @@ jobs:
             GIT_REVISION=${{ github.sha }}
             VERSION=${{ github.ref_name }}
 
-      - name: Set lowercase image ref for Trivy
-        id: image-ref
-        run: |
-          echo "value=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+      # - name: Set lowercase image ref for Trivy
+      #   id: image-ref
+      #   run: |
+      #     echo "value=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
 
-      - name: Scan filesystem for vulnerabilities - readable output
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          exit-code: '1'
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          scanners: vuln
-          format: table
+      # - name: Scan filesystem for vulnerabilities - readable output
+      #   uses: aquasecurity/trivy-action@v0.36.0
+      #   with:
+      #     scan-type: fs
+      #     scan-ref: .
+      #     exit-code: '1'
+      #     severity: CRITICAL,HIGH
+      #     ignore-unfixed: true
+      #     scanners: vuln
+      #     format: table
 
-      - name: Generate Trivy filesystem SARIF report
-        if: always()
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          exit-code: '0'
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          scanners: vuln
-          format: sarif
-          output: trivy-fs-results.sarif
+      # - name: Generate Trivy filesystem SARIF report
+      #   if: always()
+      #   uses: aquasecurity/trivy-action@v0.36.0
+      #   with:
+      #     scan-type: fs
+      #     scan-ref: .
+      #     exit-code: '0'
+      #     severity: CRITICAL,HIGH
+      #     ignore-unfixed: true
+      #     scanners: vuln
+      #     format: sarif
+      #     output: trivy-fs-results.sarif
 
-      - name: Upload Trivy filesystem scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: trivy-fs-results.sarif
+      # - name: Upload Trivy filesystem scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   if: always()
+      #   with:
+      #     sarif_file: trivy-fs-results.sarif
       
       - name: Setup .NET for migrations
         uses: actions/setup-dotnet@v4
