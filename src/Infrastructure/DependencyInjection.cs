@@ -39,7 +39,7 @@ public static class DependencyInjection
 
     private static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
-        var secretPath = "/run/secrets/db_connection_string";
+        var secretPath = "/opt/nexus/secrets/db_connection_string";
     
         var connectionString = File.Exists(secretPath)
             ? File.ReadAllText(secretPath).Trim()
