@@ -48,7 +48,7 @@ RUN addgroup -S nexus && adduser -S nexus -G nexus
 # Stage 4: Runtime — hardened, shell-less, COPY-only
 # No RUN commands: avoids /bin/sh dependency on the hardened dotnet image.
 # ──────────────────────────────────────────────────────────────────────────────
-FROM dhi.io/dotnet:10-alpine3.23
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine3.23
 
 # Build-time metadata — pass via CI build-args
 ARG BUILD_DATE
