@@ -188,14 +188,17 @@ jobs:
         run: dotnet restore ${{ env.SOLUTION }}
 
       - name: Install dotnet-ef tool and apply migrations
+        env:
+          ConnectionStrings__Database: ${{ secrets.DB_CONNECTION_STRING }}
         run: |
           dotnet tool install --global dotnet-ef
           export PATH="$PATH:$HOME/.dotnet/tools"
           dotnet ef database update \
-            --connection "$(cat /opt/nexus/secrets/db_connection_string)" \
             --project src/Infrastructure \
             --startup-project src/Web.Api \
             --configuration Release
+   #         --connection "$(cat /opt/nexus/secrets/db_connection_string)" \
+        
 
   # ────────────────────────────────────────────────────────────────────────────
   # Deploy: pull latest image and redeploy via docker compose
