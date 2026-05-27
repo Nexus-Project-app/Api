@@ -9,4 +9,8 @@ public sealed class PostResponse
     public List<string> Tags { get; set; } = [];
     public DateTime Created { get; set; }
     public DateTime Updated { get; set; }
+    public string AuthorName { get; set; } = string.Empty;
+    public int LikeCount { get; set; }
+    public int CommentCount { get; set; }
+    public bool IsLikedByCurrentUser { get; set; }
 }

@@ -1,5 +1,6 @@
 using Application.Abstractions.Data;
 using Domain.Comment;
+using Domain.Likes;
 using Domain.Posts;
 using Domain.Tags;
 using Domain.Todos;
@@ -24,6 +25,8 @@ public sealed class ApplicationDbContext(
     public DbSet<Tag> Tags { get; set; }
 
     public DbSet<Comment> Comments { get; set; }
+
+    public DbSet<Like> Likes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
