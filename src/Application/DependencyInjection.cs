@@ -1,7 +1,9 @@
 ﻿using Application.Abstractions.Authentication;
 using Application.Abstractions.Behaviors;
+using Application.Abstractions.Keycloak;
 using Application.Abstractions.Messaging;
 using Application.Abstractions.Tags;
+using Application.Keycloak;
 using Application.Tags;
 using Application.Users;
 using FluentValidation;
@@ -43,6 +45,7 @@ public static class DependencyInjection
 
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<IUserContext, UserContext>();
+        services.AddHttpClient<IKeycloakService, KeycloakService>();
 
         return services;
     }

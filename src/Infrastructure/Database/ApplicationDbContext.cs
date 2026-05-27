@@ -41,8 +41,9 @@ public sealed class ApplicationDbContext(
         //     - eventual consistency
         //     - handlers can fail
 
-        var domainEvents = ExtractDomainEvents();
         var result = await base.SaveChangesAsync(cancellationToken);
+
+        var domainEvents = ExtractDomainEvents();
 
         await PublishDomainEventsAsync(domainEvents);
 
