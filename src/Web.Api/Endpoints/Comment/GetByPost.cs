@@ -25,6 +25,6 @@ internal sealed class GetByPost : IEndpoint
             return result.Match(Results.Ok, CustomResults.Problem);
         })
         .WithTags(Tags.Posts)
-        .RequireAuthorization();
+        .AllowAnonymous();
     }
 }

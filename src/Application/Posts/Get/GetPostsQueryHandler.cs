@@ -11,6 +11,16 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
 {
     public async Task<Result<PagedList<PostResponse>>> Handle(GetPostsQuery query, CancellationToken cancellationToken)
     {
+        // Résoudre l'ID DB de l'utilisateur courant à partir du sub Keycloak (si fourni)
+        Guid? currentUserId = null;
+        if (!string.IsNullOrEmpty(query.CurrentUserSub))
+        {
+            currentUserId = await context.Users
+                .Where(u => u.KeycloakId == query.CurrentUserSub)
+                .Select(u => (Guid?)u.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
         var baseQuery = context.Posts
             .Where(p => p.Deleted == null)
             .OrderByDescending(p => p.Created);
@@ -24,11 +34,16 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
             {
                 Id = p.Id,
                 AuthorId = p.AuthorId,
+                AuthorName = (p.Author.FirstName + " " + p.Author.LastName).Trim(),
                 Title = p.Title,
                 Content = p.Content,
                 Tags = p.Tags.Select(t => t.Name).ToList(),
                 Created = p.Created,
-                Updated = p.Updated
+                Updated = p.Updated,
+                LikeCount = context.Likes.Count(l => l.PostId == p.Id),
+                CommentCount = context.Comments.Count(c => c.PostId == p.Id && c.Deleted == null),
+                IsLikedByCurrentUser = currentUserId.HasValue &&
+                    context.Likes.Any(l => l.PostId == p.Id && l.AuthorId == currentUserId.Value),
             })
             .ToListAsync(cancellationToken);
 
