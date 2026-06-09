@@ -1,6 +1,7 @@
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Application.Common;
+using Domain.Groups;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
 
@@ -21,8 +22,13 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
+        // Exclure posts de groupes privés dont l'utilisateur n'est pas membre
         var baseQuery = context.Posts
-            .Where(p => p.Deleted == null)
+            .Where(p => p.Deleted == null
+                && (p.GroupId == null
+                    || p.Group!.Visibility == GroupVisibility.Public
+                    || currentUserId.HasValue && context.GroupMembers
+                        .Any(m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value)))
             .OrderByDescending(p => p.Created);
 
         var totalCount = await baseQuery.CountAsync(cancellationToken);
@@ -44,6 +50,8 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
                 CommentCount = context.Comments.Count(c => c.PostId == p.Id && c.Deleted == null),
                 IsLikedByCurrentUser = currentUserId.HasValue &&
                     context.Likes.Any(l => l.PostId == p.Id && l.AuthorId == currentUserId.Value),
+                GroupId = p.GroupId,
+                GroupName = p.Group != null ? p.Group.Name : null
             })
             .ToListAsync(cancellationToken);
 

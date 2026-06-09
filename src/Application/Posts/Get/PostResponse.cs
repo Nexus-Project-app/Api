@@ -13,4 +13,6 @@ public sealed class PostResponse
     public int LikeCount { get; set; }
     public int CommentCount { get; set; }
     public bool IsLikedByCurrentUser { get; set; }
+    public Guid? GroupId { get; set; }
+    public string? GroupName { get; set; }
 }

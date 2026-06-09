@@ -19,5 +19,7 @@ internal sealed class PostConfiguration : IEntityTypeConfiguration<Post>
         builder.HasMany(p => p.Tags)
             .WithMany(t => t.Posts)
             .UsingEntity(j => j.ToTable("post_tags"));
+
+        builder.HasOne(p => p.Group).WithMany().HasForeignKey(p => p.GroupId).IsRequired(false);
     }
 }
