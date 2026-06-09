@@ -1,5 +1,6 @@
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
+using Domain.Groups;
 using Domain.Posts;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
@@ -23,6 +24,10 @@ internal sealed class GetPostByIdQueryHandler(IApplicationDbContext context)
 
         var post = await context.Posts
             .Where(p => p.Id == query.PostId && p.Deleted == null)
+            .Where(p => p.GroupId == null ||
+                        p.Group!.Visibility == GroupVisibility.Public ||
+                        currentUserId.HasValue && context.GroupMembers.Any(
+                            m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value))
             .Select(p => new PostResponse
             {
                 Id = p.Id,
@@ -37,6 +42,7 @@ internal sealed class GetPostByIdQueryHandler(IApplicationDbContext context)
                 CommentCount = context.Comments.Count(c => c.PostId == p.Id && c.Deleted == null),
                 IsLikedByCurrentUser = currentUserId.HasValue &&
                     context.Likes.Any(l => l.PostId == p.Id && l.AuthorId == currentUserId.Value),
+                GroupId = p.GroupId,
             })
             .SingleOrDefaultAsync(cancellationToken);
 

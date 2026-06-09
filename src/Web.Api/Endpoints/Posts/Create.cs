@@ -13,6 +13,7 @@ internal sealed class Create : IEndpoint
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public List<string> Tags { get; set; } = [];
+        public Guid? GroupId { get; set; }
     }
 
     public void MapEndpoint(IEndpointRouteBuilder app)
@@ -26,7 +27,8 @@ internal sealed class Create : IEndpoint
             {
                 Title = request.Title,
                 Content = request.Content,
-                Tags = request.Tags
+                Tags = request.Tags,
+                GroupId = request.GroupId
             };
 
             var result = await handler.Handle(command, cancellationToken);

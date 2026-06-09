@@ -1,4 +1,5 @@
-﻿using Domain.Likes;
+﻿using Domain.Groups;
+using Domain.Likes;
 using Domain.Posts;
 using Domain.Tags;
 using Domain.Todos;
@@ -15,6 +16,9 @@ public interface IApplicationDbContext
     DbSet<Tag> Tags { get; }
     DbSet<Domain.Comment.Comment> Comments { get; }
     DbSet<Like> Likes { get; }
+    DbSet<Group> Groups { get; }
+    DbSet<GroupMember> GroupMembers { get; }
+    DbSet<GroupJoinRequest> GroupJoinRequests { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

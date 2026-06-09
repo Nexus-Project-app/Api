@@ -69,6 +69,125 @@ namespace Infrastructure.Database.Migrations
                     b.ToTable("comments", "public");
                 });
 
+            modelBuilder.Entity("Domain.Groups.Group", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<int>("Visibility")
+                        .HasColumnType("integer")
+                        .HasColumnName("visibility");
+
+                    b.HasKey("Id")
+                        .HasName("pk_groups");
+
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_groups_owner_id");
+
+                    b.ToTable("groups", "public");
+                });
+
+            modelBuilder.Entity("Domain.Groups.GroupJoinRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("group_id");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewed_by_user_id");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_group_join_requests");
+
+                    b.HasIndex("GroupId")
+                        .HasDatabaseName("ix_group_join_requests_group_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_group_join_requests_user_id");
+
+                    b.ToTable("group_join_requests", "public");
+                });
+
+            modelBuilder.Entity("Domain.Groups.GroupMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("group_id");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("joined_at");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_group_members");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_group_members_user_id");
+
+                    b.HasIndex("GroupId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_group_members_group_id_user_id");
+
+                    b.ToTable("group_members", "public");
+                });
+
             modelBuilder.Entity("Domain.Likes.Like", b =>
                 {
                     b.Property<Guid>("Id")
@@ -125,6 +244,10 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted");
 
+                    b.Property<Guid?>("GroupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("group_id");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -140,6 +263,9 @@ namespace Infrastructure.Database.Migrations
 
                     b.HasIndex("AuthorId")
                         .HasDatabaseName("ix_posts_author_id");
+
+                    b.HasIndex("GroupId")
+                        .HasDatabaseName("ix_posts_group_id");
 
                     b.ToTable("posts", "public");
                 });
@@ -294,6 +420,60 @@ namespace Infrastructure.Database.Migrations
                     b.Navigation("Post");
                 });
 
+            modelBuilder.Entity("Domain.Groups.Group", b =>
+                {
+                    b.HasOne("Domain.Users.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_groups_users_owner_id");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Domain.Groups.GroupJoinRequest", b =>
+                {
+                    b.HasOne("Domain.Groups.Group", "Group")
+                        .WithMany("JoinRequests")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_group_join_requests_groups_group_id");
+
+                    b.HasOne("Domain.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_group_join_requests_users_user_id");
+
+                    b.Navigation("Group");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Groups.GroupMember", b =>
+                {
+                    b.HasOne("Domain.Groups.Group", "Group")
+                        .WithMany("Members")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_group_members_groups_group_id");
+
+                    b.HasOne("Domain.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_group_members_users_user_id");
+
+                    b.Navigation("Group");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Domain.Likes.Like", b =>
                 {
                     b.HasOne("Domain.Users.User", "Author")
@@ -324,7 +504,14 @@ namespace Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_posts_users_author_id");
 
+                    b.HasOne("Domain.Groups.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .HasConstraintName("fk_posts_groups_group_id");
+
                     b.Navigation("Author");
+
+                    b.Navigation("Group");
                 });
 
             modelBuilder.Entity("Domain.Todos.TodoItem", b =>
@@ -352,6 +539,13 @@ namespace Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_post_tags_tags_tags_id");
+                });
+
+            modelBuilder.Entity("Domain.Groups.Group", b =>
+                {
+                    b.Navigation("JoinRequests");
+
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("Domain.Posts.Post", b =>

@@ -1,5 +1,6 @@
 using Application.Abstractions.Data;
 using Domain.Comment;
+using Domain.Groups;
 using Domain.Likes;
 using Domain.Posts;
 using Domain.Tags;
@@ -27,6 +28,12 @@ public sealed class ApplicationDbContext(
     public DbSet<Comment> Comments { get; set; }
 
     public DbSet<Like> Likes { get; set; }
+
+    public DbSet<Group> Groups { get; set; }
+
+    public DbSet<GroupMember> GroupMembers { get; set; }
+
+    public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
