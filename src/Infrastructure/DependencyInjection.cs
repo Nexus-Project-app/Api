@@ -1,10 +1,13 @@
 ﻿using System.Text;
+using Amazon.S3;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Storage;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
+using Infrastructure.Storage;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +28,7 @@ public static class DependencyInjection
         services
             .AddServices()
             .AddDatabase(configuration)
+            .AddStorage(configuration)
             .AddHealthChecks(configuration)
             .AddAuthorizationInternal();
 
@@ -62,6 +66,41 @@ public static class DependencyInjection
         services
             .AddHealthChecks()
             .AddNpgSql(configuration.GetConnectionString("Database")!);
+
+        return services;
+    }
+
+    private static IServiceCollection AddStorage(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var provider = configuration["Storage:Provider"] ?? "FileSystem";
+
+        if (provider == "Garage")
+        {
+            var accessKey = GarageAttachmentStorage.ReadSecret(
+                "/opt/nexus/secrets/garage_access_key",
+                configuration["Storage:AccessKey"] ?? string.Empty);
+
+            var secretKey = GarageAttachmentStorage.ReadSecret(
+                "/opt/nexus/secrets/garage_secret_key",
+                configuration["Storage:SecretKey"] ?? string.Empty);
+
+            var s3Config = new AmazonS3Config()
+            {
+                ServiceURL = configuration["Storage:Endpoint"],
+                ForcePathStyle = true,
+            };
+
+            services.AddSingleton<IAmazonS3>(_ =>
+                new AmazonS3Client(accessKey, secretKey, s3Config));
+
+            services.AddScoped<IAttachmentStorage, GarageAttachmentStorage>();
+        }
+        else
+        {
+            services.AddScoped<IAttachmentStorage, FileSystemAttachmentStorage>();
+        }
 
         return services;
     }
