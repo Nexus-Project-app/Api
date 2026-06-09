@@ -85,14 +85,15 @@ public static class DependencyInjection
                 "/opt/nexus/secrets/garage_secret_key",
                 configuration["Storage:SecretKey"] ?? string.Empty);
 
-            var endpoint = configuration["Storage:Endpoint"] ?? "http://garage:3900";
-            var bucket   = configuration["Storage:BucketName"] ?? "nexus-attachments";
-            var region   = configuration["Storage:Region"] ?? "garage";
+            var endpoint  = configuration["Storage:Endpoint"] ?? "http://garage:3900";
+            var bucket    = configuration["Storage:BucketName"] ?? "nexus-attachments";
+            var region    = configuration["Storage:Region"] ?? "garage";
+            var publicUrl = configuration["Storage:PublicBaseUrl"] ?? string.Empty;
 
             services.AddHttpClient("garage");
             services.AddScoped<IAttachmentStorage>(sp => new GarageAttachmentStorage(
                 sp.GetRequiredService<IHttpClientFactory>(),
-                accessKey, secretKey, endpoint, bucket, region));
+                accessKey, secretKey, endpoint, bucket, region, publicUrl));
         }
         else
         {

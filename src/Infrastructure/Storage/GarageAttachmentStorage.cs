@@ -14,6 +14,7 @@ internal sealed class GarageAttachmentStorage : IAttachmentStorage
     private readonly string _endpoint;
     private readonly string _bucket;
     private readonly string _region;
+    private readonly string _publicUrl;
 
     internal GarageAttachmentStorage(
         IHttpClientFactory http,
@@ -21,7 +22,8 @@ internal sealed class GarageAttachmentStorage : IAttachmentStorage
         string secretKey,
         string endpoint,
         string bucket,
-        string region)
+        string region,
+        string publicUrl)
     {
         _http = http;
         _accessKey = accessKey;
@@ -29,6 +31,7 @@ internal sealed class GarageAttachmentStorage : IAttachmentStorage
         _endpoint = endpoint.TrimEnd('/');
         _bucket = bucket;
         _region = region;
+        _publicUrl = publicUrl.TrimEnd('/');
     }
 
     public async Task<string> UploadAsync(string key, Stream content, string contentType)
@@ -58,8 +61,12 @@ internal sealed class GarageAttachmentStorage : IAttachmentStorage
         response.EnsureSuccessStatusCode();
     }
 
+    // Returns a URL through the API proxy (/files/{key}) when configured,
+    // falling back to the direct Garage S3 URL.
     public string GetPermanentUrl(string key) =>
-        $"{_endpoint}/{_bucket}/{key}";
+        string.IsNullOrEmpty(_publicUrl)
+            ? $"{_endpoint}/{_bucket}/{key}"
+            : $"{_publicUrl}/files/{key}";
 
     // Minimal AWS Signature Version 4 for S3 path-style requests.
     // The AWSSDK always sends STREAMING-AWS4-HMAC-SHA256-PAYLOAD which Garage rejects;
