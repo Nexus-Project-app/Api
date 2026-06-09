@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Amazon.S3;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Storage;
@@ -86,16 +85,14 @@ public static class DependencyInjection
                 "/opt/nexus/secrets/garage_secret_key",
                 configuration["Storage:SecretKey"] ?? string.Empty);
 
-            var s3Config = new AmazonS3Config()
-            {
-                ServiceURL = configuration["Storage:Endpoint"],
-                ForcePathStyle = true,
-            };
+            var endpoint = configuration["Storage:Endpoint"] ?? "http://garage:3900";
+            var bucket   = configuration["Storage:BucketName"] ?? "nexus-attachments";
+            var region   = configuration["Storage:Region"] ?? "garage";
 
-            services.AddSingleton<IAmazonS3>(_ =>
-                new AmazonS3Client(accessKey, secretKey, s3Config));
-
-            services.AddScoped<IAttachmentStorage, GarageAttachmentStorage>();
+            services.AddHttpClient("garage");
+            services.AddScoped<IAttachmentStorage>(sp => new GarageAttachmentStorage(
+                sp.GetRequiredService<IHttpClientFactory>(),
+                accessKey, secretKey, endpoint, bucket, region));
         }
         else
         {
