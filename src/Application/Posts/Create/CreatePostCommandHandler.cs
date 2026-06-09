@@ -24,7 +24,7 @@ internal sealed class CreatePostCommandHandler(
                 .AnyAsync(m => m.GroupId == command.GroupId.Value && m.UserId == userContext.UserId, cancellationToken);
 
             if (!isMember)
-            {CreatePostCommandHandler
+            {
                 return Result.Failure<Guid>(GroupErrors.NotMember);
             }
         }
