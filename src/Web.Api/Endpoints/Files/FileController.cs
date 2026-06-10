@@ -53,14 +53,14 @@ public class FileController : ControllerBase
             // Sert le fichier avec support du range processing (pour les vidéos, etc.)
             return File(stream, contentType, enableRangeProcessing: true);
         }
-        catch (FileNotFoundException)
+        catch (FileNotFoundException ex)
         {
-            _logger.LogWarning("Fichier non trouvé: {Path}", path);
+            _logger.LogWarning(ex, "Fichier non trouvé: {Path}", path);
             return NotFound($"Le fichier '{path}' n'existe pas");
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
-            _logger.LogWarning("Accès non autorisé au fichier: {Path}", path);
+            _logger.LogWarning(ex, "Accès non autorisé au fichier: {Path}", path);
             return Forbid();
         }
         catch (Exception ex)
@@ -73,43 +73,44 @@ public class FileController : ControllerBase
 
     /// <summary>
     /// Détermine le type MIME en fonction de l'extension du fichier.
+    /// Utilise ToUpperInvariant pour la comparaison.
     /// </summary>
     private static string GetContentType(string filePath)
     {
-        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        var extension = Path.GetExtension(filePath).ToUpperInvariant();
 
         return extension switch
         {
             // Images
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".gif" => "image/gif",
-            ".webp" => "image/webp",
-            ".svg" => "image/svg+xml",
-            ".ico" => "image/x-icon",
+            ".JPG" or ".JPEG" => "image/jpeg",
+            ".PNG" => "image/png",
+            ".GIF" => "image/gif",
+            ".WEBP" => "image/webp",
+            ".SVG" => "image/svg+xml",
+            ".ICO" => "image/x-icon",
 
             // Documents
-            ".pdf" => "application/pdf",
-            ".doc" => "application/msword",
-            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            ".xls" => "application/vnd.ms-excel",
-            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            ".ppt" => "application/vnd.ms-powerpoint",
-            ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            ".txt" => "text/plain",
-            ".csv" => "text/csv",
+            ".PDF" => "application/pdf",
+            ".DOC" => "application/msword",
+            ".DOCX" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".XLS" => "application/vnd.ms-excel",
+            ".XLSX" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".PPT" => "application/vnd.ms-powerpoint",
+            ".PPTX" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ".TXT" => "text/plain",
+            ".CSV" => "text/csv",
 
             // Audio/Video
-            ".mp3" => "audio/mpeg",
-            ".mp4" => "video/mp4",
-            ".webm" => "video/webm",
-            ".wav" => "audio/wav",
-            ".m4a" => "audio/mp4",
+            ".MP3" => "audio/mpeg",
+            ".MP4" => "video/mp4",
+            ".WEBM" => "video/webm",
+            ".WAV" => "audio/wav",
+            ".M4A" => "audio/mp4",
 
             // Archives
-            ".zip" => "application/zip",
-            ".rar" => "application/x-rar-compressed",
-            ".7z" => "application/x-7z-compressed",
+            ".ZIP" => "application/zip",
+            ".RAR" => "application/x-rar-compressed",
+            ".7Z" => "application/x-7z-compressed",
 
             // Default
             _ => "application/octet-stream"
