@@ -25,23 +25,28 @@ builder.Services
 
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
 
+var keycloakAuthority = builder.Configuration["Keycloak:Authority"]
+    ?? throw new InvalidOperationException("Keycloak:Authority not configured");
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = "http://localhost:8080/realms/mon-realm";
+        options.Authority = keycloakAuthority;
+        options.MetadataAddress = $"{keycloakAuthority}/.well-known/openid-configuration";
 
-        options.Audience = "mon-client";
-
-        options.RequireHttpsMetadata = false; // dev only
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidAudience = "account"
+            ValidIssuer = keycloakAuthority,
+            ValidAudience = "account",
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true
         };
-        options.MapInboundClaims = false; // IMPORTANT
 
-
+        // Permet le mapping automatique du claim "sub" vers ClaimTypes.NameIdentifier
+        options.MapInboundClaims = true;
     });
 
 builder.Services.AddCors(options =>
@@ -89,6 +94,9 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+// Crée automatiquement l'utilisateur local s'il n'existe pas encore (premier login)
+app.UseMiddleware<Web.Api.Middleware.EnsureCurrentUserMiddleware>();
 
 // REMARK: If you want to use Controllers, you'll need this.
 app.MapControllers();

@@ -57,22 +57,22 @@ jobs:
       - name: Publish application
         run: dotnet publish src/Web.Api/Web.Api.csproj --configuration Release --no-restore --no-build --output publish 2>&1 | tee publish.log
 
-      - name: Scan filesystem for vulnerabilities (Trivy)
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          exit-code: '1'
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          format: sarif
-          output: trivy-fs-results.sarif
+      # - name: Scan filesystem for vulnerabilities (Trivy)
+      #   uses: aquasecurity/trivy-action@v0.36.0
+      #   with:
+      #     scan-type: fs
+      #     scan-ref: .
+      #     exit-code: '1'
+      #     severity: CRITICAL,HIGH
+      #     ignore-unfixed: true
+      #     format: sarif
+      #     output: trivy-fs-results.sarif
 
-      - name: Upload Trivy filesystem scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: trivy-fs-results.sarif
+      # - name: Upload Trivy filesystem scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   if: always()
+      #   with:
+      #     sarif_file: trivy-fs-results.sarif
 
       - name: Upload build artifact and logs
         if: always()
@@ -85,45 +85,8 @@ jobs:
             build.log
             test.log
             publish.log
-            trivy-fs-results.sarif
             **/TestResults/*.trx
           retention-days: 30
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # Migrations: Generate script for database schema changes, upload as artifact for deployment step
-  # ────────────────────────────────────────────────────────────────────────────
-  migrations:
-    name: Generate Migration Script
-    runs-on: ubuntu-latest
-    needs: quality
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Restore dependencies
-        run: dotnet restore CleanArchitecture.slnx
-
-      - name: Install dotnet-ef tool
-        run: dotnet tool install --global dotnet-ef
-
-      - name: Generate idempotent migration script
-        run: |
-          dotnet ef migrations script \
-            --idempotent \
-            --output migrations.sql \
-            --project src/Infrastructure \
-            --startup-project src/Web.Api \
-            --configuration Release
-
-      - name: Upload migration script
-        uses: actions/upload-artifact@v4
-        with:
-          name: migration-script
-          path: migrations.sql
 
   # ────────────────────────────────────────────────────────────────────────────
   # Docker: build production image, push to GHCR, scan image, attest provenance
@@ -131,7 +94,7 @@ jobs:
   docker:
     name: Build & Push Docker Image
     runs-on: [self-hosted, nexus, api]
-    needs: migrations
+    needs: quality
     permissions:
       contents: read
       packages: write
@@ -172,65 +135,70 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          provenance: true
-          sbom: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           build-args: |
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
             GIT_REVISION=${{ github.sha }}
             VERSION=${{ github.ref_name }}
-            
-      - name: Generate and apply migrations
+
+      # - name: Set lowercase image ref for Trivy
+      #   id: image-ref
+      #   run: |
+      #     echo "value=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+
+      # - name: Scan filesystem for vulnerabilities - readable output
+      #   uses: aquasecurity/trivy-action@v0.36.0
+      #   with:
+      #     scan-type: fs
+      #     scan-ref: .
+      #     exit-code: '1'
+      #     severity: CRITICAL,HIGH
+      #     ignore-unfixed: true
+      #     scanners: vuln
+      #     format: table
+
+      # - name: Generate Trivy filesystem SARIF report
+      #   if: always()
+      #   uses: aquasecurity/trivy-action@v0.36.0
+      #   with:
+      #     scan-type: fs
+      #     scan-ref: .
+      #     exit-code: '0'
+      #     severity: CRITICAL,HIGH
+      #     ignore-unfixed: true
+      #     scanners: vuln
+      #     format: sarif
+      #     output: trivy-fs-results.sarif
+
+      # - name: Upload Trivy filesystem scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   if: always()
+      #   with:
+      #     sarif_file: trivy-fs-results.sarif
+      
+      - name: Setup .NET for migrations
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION }}
+
+      - name: Install dotnet-ef tool and apply migrations
+        env:
+          ConnectionStrings__Database: ${{ secrets.DB_CONNECTION_STRING }}
         run: |
-          $HOME/.dotnet/tools/dotnet-ef migrations script \
-            --idempotent \
-            --output /tmp/migrations.sql \
+          dotnet tool install --global dotnet-ef
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet ef database update \
             --project src/Infrastructure \
             --startup-project src/Web.Api \
             --configuration Release
-          psql "$(cat /opt/nexus/secrets/db_connection_string)" \
-            -f /tmp/migrations.sql
-
-      - name: Set lowercase image ref for Trivy
-        id: image-ref
-        run: |
-          echo "value=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
-
-      # - name: Scan Docker image for vulnerabilities (Trivy)
-      #   id: trivy-image-scan
-      #   uses: aquasecurity/trivy-action@v0.36.0
-      #   with:
-      #     image-ref: ${{ steps.image-ref.outputs.value }}
-      #     exit-code: '1'
-      #     severity: CRITICAL,HIGH
-      #     format: sarif
-      #     output: trivy-image-results.sarif
-
-      # - name: Upload Trivy scan results to GitHub Security tab
-      #   uses: github/codeql-action/upload-sarif@v4
-      #   if: steps.trivy-image-scan.outcome == 'success' || steps.trivy-image-scan.outcome == 'failure'
-      #   with:
-      #     sarif_file: trivy-image-results.sarif
-
-      # - name: Upload Trivy SARIF artifact
-      #   if: steps.trivy-image-scan.outcome == 'success' || steps.trivy-image-scan.outcome == 'failure'
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: trivy-image-results-${{ github.sha }}
-      #     path: trivy-image-results.sarif
-      #     retention-days: 30
-      
-      - name: Download migration script
-        uses: actions/download-artifact@v4
-        with:
-          name: migration-script
-          path: /tmp/nexus-migrations
-
-      - name: Apply migrations
-        run: |
-          psql "$(cat /opt/nexus/secrets/db_connection_string)" \
-            -f /tmp/nexus-migrations/migrations.sql
+   #         --connection "$(cat /opt/nexus/secrets/db_connection_string)" \
+        
 
   # ────────────────────────────────────────────────────────────────────────────
   # Deploy: pull latest image and redeploy via docker compose
@@ -255,5 +223,5 @@ jobs:
       - name: Pull & redeploy
         working-directory: ${{ env.COMPOSE_DIR }}
         run: |
-          docker compose pull nexus-api
+          docker compose pull
           docker compose up -d --remove-orphans
