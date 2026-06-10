@@ -25,9 +25,10 @@ internal sealed class GetPostByIdQueryHandler(IApplicationDbContext context)
         var post = await context.Posts
             .Where(p => p.Id == query.PostId && p.Deleted == null)
             .Where(p => p.GroupId == null ||
-                        p.Group!.Visibility == GroupVisibility.Public ||
-                        currentUserId.HasValue && context.GroupMembers.Any(
-                            m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value))
+                        p.Group!.DeletedAt == null &&
+                         (p.Group.Visibility == GroupVisibility.Public ||
+                          currentUserId.HasValue && context.GroupMembers.Any(
+                              m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value)))
             .Select(p => new PostResponse
             {
                 Id = p.Id,

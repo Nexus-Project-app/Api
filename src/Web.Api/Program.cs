@@ -1,9 +1,11 @@
 using System.Reflection;
 using Application;
+using Application.Abstractions.Storage;
 using HealthChecks.UI.Client;
 using Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Formatting.Json;
@@ -24,6 +26,16 @@ builder.Services
     .AddInfrastructure(builder.Configuration);
 
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 20 * 1024 * 1024;
+});
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 20 * 1024 * 1024;
+});
 
 var keycloakAuthority = builder.Configuration["Keycloak:Authority"]
     ?? throw new InvalidOperationException("Keycloak:Authority not configured");
@@ -78,6 +90,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerWithUi();
 
     app.ApplyMigrations();
+
+    app.MapGet("/attachments/{**key}", async (string key, IAttachmentStorage storage) =>
+    {
+        Stream stream = await storage.DownloadAsync(key);
+        return Results.Stream(stream);
+    });
 }
 
 app.MapHealthChecks("health", new HealthCheckOptions

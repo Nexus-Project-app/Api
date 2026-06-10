@@ -20,9 +20,9 @@ public class UserContext : IUserContext
     {
         get
         {
-            // After MapInboundClaims = true, "sub" is mapped to ClaimTypes.NameIdentifier
-            var sub = _http.HttpContext?.User
-                .FindFirstValue(ClaimTypes.NameIdentifier)
+            // .NET 8+ JsonWebTokenHandler keeps "sub" as-is; fallback handles both cases
+            var sub = _http.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? _http.HttpContext?.User.FindFirstValue("sub")
                 ?? throw new InvalidOperationException("User is not authenticated.");
 
             // Look up by KeycloakId so it works regardless of whether User.Id == sub

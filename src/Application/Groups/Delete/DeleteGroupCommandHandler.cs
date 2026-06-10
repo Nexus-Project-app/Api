@@ -9,6 +9,7 @@ namespace Application.Groups.Delete;
 
 internal sealed class DeleteGroupCommandHandler(
     IApplicationDbContext context,
+    IDateTimeProvider dateTimeProvider,
     IUserContext userContext)
     : ICommandHandler<DeleteGroupCommand>
 {
@@ -27,7 +28,21 @@ internal sealed class DeleteGroupCommandHandler(
             return Result.Failure(GroupErrors.NotAuthorized);
         }
 
-        context.Groups.Remove(group);
+        DateTime now = dateTimeProvider.UtcNow;
+
+        await context.Posts
+            .Where(p => p.GroupId == group.Id && p.Deleted == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Deleted, now), cancellationToken);
+
+        await context.GroupMembers
+            .Where(m => m.GroupId == group.Id)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await context.GroupJoinRequests
+            .Where(r => r.GroupId == group.Id)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        group.DeletedAt = now;
         await context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

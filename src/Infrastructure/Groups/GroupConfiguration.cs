@@ -25,5 +25,7 @@ internal sealed class GroupConfiguration : IEntityTypeConfiguration<Group>
             .WithOne(r => r.Group)
             .HasForeignKey(r => r.GroupId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(g => g.DeletedAt == null);
     }
 }
