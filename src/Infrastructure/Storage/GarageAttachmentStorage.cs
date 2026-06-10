@@ -61,66 +61,22 @@ internal sealed class GarageAttachmentStorage : IAttachmentStorage
         response.EnsureSuccessStatusCode();
     }
 
-    // Génère une URL pré-signée (AWS Signature V4) valable X minutes
-    // Le frontend peut utiliser cette URL pour accéder à l'image sans credentials
-    public string GetPresignedUrl(string key, int expirationMinutes = 30)
-    {
-        var encodedKey = string.Join("/", key.Split('/').Select(Uri.EscapeDataString));
-        var uri = new Uri($"{_endpoint}/{_bucket}/{encodedKey}");
-
-        var now = DateTime.UtcNow;
-        var amzDate = now.ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture);
-        var dateStamp = now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-        var expiresIn = expirationMinutes * 60; // convertir en secondes
-        
-        var host = uri.IsDefaultPort ? uri.Host : $"{uri.Host}:{uri.Port}";
-
-        // Credential scope pour la signature
-        var credentialScope = $"{dateStamp}/{_region}/s3/aws4_request";
-        var credential = Uri.EscapeDataString($"{_accessKey}/{credentialScope}");
-
-        // Query string avec les paramètres de signature
-        var canonicalQueryString = 
-            $"X-Amz-Algorithm=AWS4-HMAC-SHA256&" +
-            $"X-Amz-Credential={credential}&" +
-            $"X-Amz-Date={amzDate}&" +
-            $"X-Amz-Expires={expiresIn}&" +
-            $"X-Amz-SignedHeaders=host";
-
-        // Requête canonique pour GET (sans corps)
-        var canonicalRequest = string.Join("\n",
-            "GET",
-            $"/{_bucket}/{encodedKey}",
-            canonicalQueryString,
-            $"host:{host}\n",
-            "host",
-            Hex(SHA256.HashData([])));
-
-        // String to sign
-        var stringToSign = string.Join("\n",
-            "AWS4-HMAC-SHA256",
-            amzDate,
-            credentialScope,
-            Hex(SHA256.HashData(Encoding.UTF8.GetBytes(canonicalRequest))));
-
-        // Dériver la clé de signature et calculer la signature
-        var signingKey = DeriveSigningKey(_secretKey, dateStamp, _region, "s3");
-        var signature = Hex(HmacSha256(signingKey, Encoding.UTF8.GetBytes(stringToSign)));
-
-        // Retourner l'URL complète avec tous les paramètres de signature
-        return $"{uri}?{canonicalQueryString}&X-Amz-Signature={signature}";
-    }
-
-    // Retourne une URL pré-signée pour l'accès public
-    // ou un proxy si _publicUrl est configurée
+    /// <summary>
+    /// Retourne une URL publique pour accéder au fichier.
+    /// 
+    /// Si _publicUrl est configurée (ex: http://groupe5.diiage.org/api/files):
+    /// - Retourne une URL vers le proxy API qui s'authentifie auprès de Garage
+    /// - Le client n'a pas besoin de credentials
+    /// 
+    /// Sinon, retourne une URL directe Garage (anonyme, peut être bloquée)
+    /// </summary>
     public string GetPermanentUrl(string key) =>
         string.IsNullOrEmpty(_publicUrl)
-            ? GetPresignedUrl(key, expirationMinutes: 30)  // URL pré-signée valable 30 minutes
-            : $"{_publicUrl}/files/{key}";                 // Ou un proxy API
+            ? $"{_endpoint}/{_bucket}/{key}"           // URL directe Garage (si accès anonyme autorisé)
+            : $"{_publicUrl}/{key}";                    // Proxy API
 
-    // Minimal AWS Signature Version 4 pour les requêtes S3 path-style.
-    // On signe manuellement pour éviter les limitations de AWSSDK (streaming payload)
-    // qui ne fonctionne pas bien avec Garage.
+    // AWS Signature Version 4 minimal pour les requêtes S3 path-style.
+    // Signé manuellement pour éviter les limitations de AWSSDK.
     private async Task<HttpResponseMessage> SignedRequestAsync(
         HttpMethod method,
         string key,
