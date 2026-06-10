@@ -223,5 +223,5 @@ jobs:
       - name: Pull & redeploy
         working-directory: ${{ env.COMPOSE_DIR }}
         run: |
-          docker compose pull
-          docker compose up -d --remove-orphans
+          docker compose pull api
+          docker compose up -d api --remove-orphans
