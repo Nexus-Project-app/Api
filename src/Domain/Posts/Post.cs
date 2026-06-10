@@ -1,3 +1,4 @@
+using Domain.Groups;
 using Domain.Tags;
 using Domain.Users;
 using SharedKernel;
@@ -16,4 +17,6 @@ public class Post : Entity
     public User Author { get; set; } = null!;
     public List<Tag> Tags { get; set; } = [];
     public List<Comment.Comment> Comments { get; set; } = [];
+    public Guid? GroupId { get; set; }
+    public Group? Group { get; set; }
 }
