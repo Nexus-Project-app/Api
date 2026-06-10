@@ -30,9 +30,6 @@ public class FileController : ControllerBase
     /// <param name="path">Chemin du fichier dans le bucket Garage (avec les dossiers)</param>
     /// <returns>Le contenu du fichier avec le type MIME approprié</returns>
     [HttpGet("{**path}")]
-    [ProduceResponseType(StatusCodes.Status200OK)]
-    [ProduceResponseType(StatusCodes.Status404NotFound)]
-    [ProduceResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetFile(string path)
     {
         try
