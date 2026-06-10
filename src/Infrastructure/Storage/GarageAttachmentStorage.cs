@@ -61,16 +61,66 @@ internal sealed class GarageAttachmentStorage : IAttachmentStorage
         response.EnsureSuccessStatusCode();
     }
 
-    // Returns a URL through the API proxy (/files/{key}) when configured,
-    // falling back to the direct Garage S3 URL.
+    // Génère une URL pré-signée (AWS Signature V4) valable X minutes
+    // Le frontend peut utiliser cette URL pour accéder à l'image sans credentials
+    public string GetPresignedUrl(string key, int expirationMinutes = 30)
+    {
+        var encodedKey = string.Join("/", key.Split('/').Select(Uri.EscapeDataString));
+        var uri = new Uri($"{_endpoint}/{_bucket}/{encodedKey}");
+
+        var now = DateTime.UtcNow;
+        var amzDate = now.ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture);
+        var dateStamp = now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+        var expiresIn = expirationMinutes * 60; // convertir en secondes
+        
+        var host = uri.IsDefaultPort ? uri.Host : $"{uri.Host}:{uri.Port}";
+
+        // Credential scope pour la signature
+        var credentialScope = $"{dateStamp}/{_region}/s3/aws4_request";
+        var credential = Uri.EscapeDataString($"{_accessKey}/{credentialScope}");
+
+        // Query string avec les paramètres de signature
+        var canonicalQueryString = 
+            $"X-Amz-Algorithm=AWS4-HMAC-SHA256&" +
+            $"X-Amz-Credential={credential}&" +
+            $"X-Amz-Date={amzDate}&" +
+            $"X-Amz-Expires={expiresIn}&" +
+            $"X-Amz-SignedHeaders=host";
+
+        // Requête canonique pour GET (sans corps)
+        var canonicalRequest = string.Join("\n",
+            "GET",
+            $"/{_bucket}/{encodedKey}",
+            canonicalQueryString,
+            $"host:{host}\n",
+            "host",
+            Hex(SHA256.HashData([])));
+
+        // String to sign
+        var stringToSign = string.Join("\n",
+            "AWS4-HMAC-SHA256",
+            amzDate,
+            credentialScope,
+            Hex(SHA256.HashData(Encoding.UTF8.GetBytes(canonicalRequest))));
+
+        // Dériver la clé de signature et calculer la signature
+        var signingKey = DeriveSigningKey(_secretKey, dateStamp, _region, "s3");
+        var signature = Hex(HmacSha256(signingKey, Encoding.UTF8.GetBytes(stringToSign)));
+
+        // Retourner l'URL complète avec tous les paramètres de signature
+        return $"{uri}?{canonicalQueryString}&X-Amz-Signature={signature}";
+    }
+
+    // Retourne une URL pré-signée pour l'accès public
+    // ou un proxy si _publicUrl est configurée
     public string GetPermanentUrl(string key) =>
         string.IsNullOrEmpty(_publicUrl)
-            ? $"{_endpoint}/{_bucket}/{key}"
-            : $"{_publicUrl}/files/{key}";
+            ? GetPresignedUrl(key, expirationMinutes: 30)  // URL pré-signée valable 30 minutes
+            : $"{_publicUrl}/files/{key}";                 // Ou un proxy API
 
-    // Minimal AWS Signature Version 4 for S3 path-style requests.
-    // The AWSSDK always sends STREAMING-AWS4-HMAC-SHA256-PAYLOAD which Garage rejects;
-    // signing manually lets us send the real body hash over plain HTTP.
+    // Minimal AWS Signature Version 4 pour les requêtes S3 path-style.
+    // On signe manuellement pour éviter les limitations de AWSSDK (streaming payload)
+    // qui ne fonctionne pas bien avec Garage.
     private async Task<HttpResponseMessage> SignedRequestAsync(
         HttpMethod method,
         string key,
@@ -88,7 +138,7 @@ internal sealed class GarageAttachmentStorage : IAttachmentStorage
         var bodyBytes = body ?? [];
         var bodyHash = Hex(SHA256.HashData(bodyBytes));
 
-        // Headers must be sorted alphabetically (canonical headers requirement).
+        // Les headers doivent être triés alphabétiquement
         var hdrs = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
             ["host"] = host,
@@ -157,7 +207,7 @@ internal sealed class GarageAttachmentStorage : IAttachmentStorage
         return hmac.ComputeHash(data);
     }
 
-    // "x2" format produces lowercase hex without locale-sensitive ToLowerInvariant.
+    // Format "x2" produit du hex minuscule sans dépendre de la locale
     private static string Hex(byte[] bytes) =>
         string.Concat(bytes.Select(b => b.ToString("x2", CultureInfo.InvariantCulture)));
 
