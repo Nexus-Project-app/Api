@@ -5,6 +5,8 @@ using Domain.Groups;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
 
+#pragma warning disable CA1308, CA1862
+
 namespace Application.Posts.Get;
 
 internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
@@ -12,7 +14,6 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
 {
     public async Task<Result<PagedList<PostResponse>>> Handle(GetPostsQuery query, CancellationToken cancellationToken)
     {
-        // Résoudre l'ID DB de l'utilisateur courant à partir du sub Keycloak (si fourni)
         Guid? currentUserId = null;
         if (!string.IsNullOrEmpty(query.CurrentUserSub))
         {
@@ -22,15 +23,38 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        // Exclure posts de groupes privés dont l'utilisateur n'est pas membre
-        var baseQuery = context.Posts
+        var filtered = context.Posts
             .Where(p => p.Deleted == null
                 && (p.GroupId == null
                     || p.Group!.DeletedAt == null
                         && (p.Group.Visibility == GroupVisibility.Public
                             || currentUserId.HasValue && context.GroupMembers
-                                .Any(m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value))))
-            .OrderByDescending(p => p.Created);
+                                .Any(m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value))));
+
+        if (!string.IsNullOrEmpty(query.Search))
+        {
+            var searchLower = query.Search.ToLowerInvariant();
+            filtered = filtered.Where(p =>
+                p.Title.ToLowerInvariant().Contains(searchLower) ||
+                p.Content.ToLowerInvariant().Contains(searchLower));
+        }
+
+        if (!string.IsNullOrEmpty(query.Tag))
+        {
+            var tagLower = query.Tag.ToLowerInvariant();
+            filtered = filtered.Where(p =>
+                p.Tags.Any(t => t.Name.ToLowerInvariant().Contains(tagLower)));
+        }
+
+        if (!string.IsNullOrEmpty(query.Author))
+        {
+            var authorLower = query.Author.ToLowerInvariant();
+            filtered = filtered.Where(p =>
+                p.Author.FirstName.ToLowerInvariant().Contains(authorLower) ||
+                p.Author.LastName.ToLowerInvariant().Contains(authorLower));
+        }
+
+        var baseQuery = filtered.OrderByDescending(p => p.Created);
 
         var totalCount = await baseQuery.CountAsync(cancellationToken);
 

@@ -4,6 +4,8 @@ using Application.Common;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
 
+#pragma warning disable CA1308, CA1862
+
 namespace Application.Groups.Get;
 
 internal sealed class GetGroupsQueryHandler(IApplicationDbContext context)
@@ -11,8 +13,17 @@ internal sealed class GetGroupsQueryHandler(IApplicationDbContext context)
 {
     public async Task<Result<PagedList<GroupSummaryResponse>>> Handle(GetGroupsQuery query, CancellationToken cancellationToken)
     {
-        var baseQuery = context.Groups
-            .OrderByDescending(g => g.Created);
+        var filtered = context.Groups.AsQueryable();
+
+        if (!string.IsNullOrEmpty(query.Search))
+        {
+            var searchLower = query.Search.ToLowerInvariant();
+            filtered = filtered.Where(g =>
+                g.Name.ToLowerInvariant().Contains(searchLower) ||
+                g.Description.ToLowerInvariant().Contains(searchLower));
+        }
+
+        var baseQuery = filtered.OrderByDescending(g => g.Created);
 
         var totalCount = await baseQuery.CountAsync(cancellationToken);
 
