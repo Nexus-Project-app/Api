@@ -1,3 +1,9 @@
+secrets:
+  garage_access_key:
+    external: true
+  garage_secret_key:
+    external: true
+
 services:
   web-api:
     image: ${DOCKER_REGISTRY-}webapi
@@ -8,6 +14,11 @@ services:
     ports:
       - 5000:8080
       - 5001:8081
+    secrets:
+      - garage_access_key
+      - garage_secret_key
+    volumes:
+      - /opt/nexus/secrets:/opt/nexus/secrets:ro
 
   postgres:
     image: postgres:17

@@ -211,6 +211,8 @@ jobs:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     env:
       COMPOSE_DIR: /opt/nexus
+      GARAGE_ACCESS_KEY: ${{ secrets.GARAGE_ACCESS_KEY }}
+      GARAGE_SECRET_KEY: ${{ secrets.GARAGE_SECRET_KEY }}
 
     steps:
       - name: Log in to GitHub Container Registry
@@ -218,10 +220,10 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_PULL_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull & redeploy
         working-directory: ${{ env.COMPOSE_DIR }}
         run: |
-          docker compose pull
-          docker compose up -d --remove-orphans
+          docker compose pull api
+          docker compose up -d api --remove-orphans
