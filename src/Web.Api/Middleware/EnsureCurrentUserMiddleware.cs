@@ -18,7 +18,8 @@ public sealed class EnsureCurrentUserMiddleware(RequestDelegate next)
     {
         if (context.User.Identity?.IsAuthenticated == true)
         {
-            var sub = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var sub = context.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? context.User.FindFirstValue("sub");
 
             if (!string.IsNullOrEmpty(sub))
             {

@@ -81,7 +81,7 @@ COPY --from=publish --chown=nexus:nexus /app/publish .
 
 USER nexus
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=3600s --timeout=5s --start-period=15s --retries=3 \
     CMD ["/bin/wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
 
 ENTRYPOINT ["dotnet", "Web.Api.dll"]

@@ -1,10 +1,12 @@
 ﻿using System.Text;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Storage;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
+using Infrastructure.Storage;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +27,7 @@ public static class DependencyInjection
         services
             .AddServices()
             .AddDatabase(configuration)
+            .AddStorage(configuration)
             .AddHealthChecks(configuration)
             .AddAuthorizationInternal();
 
@@ -62,6 +65,40 @@ public static class DependencyInjection
         services
             .AddHealthChecks()
             .AddNpgSql(configuration.GetConnectionString("Database")!);
+
+        return services;
+    }
+
+    private static IServiceCollection AddStorage(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var provider = configuration["Storage:Provider"] ?? "FileSystem";
+
+        if (provider == "Garage")
+        {
+            var accessKey = GarageAttachmentStorage.ReadSecret(
+                "/opt/nexus/secrets/garage_access_key",
+                configuration["Storage:AccessKey"] ?? string.Empty);
+
+            var secretKey = GarageAttachmentStorage.ReadSecret(
+                "/opt/nexus/secrets/garage_secret_key",
+                configuration["Storage:SecretKey"] ?? string.Empty);
+
+            var endpoint  = configuration["Storage:Endpoint"] ?? "http://garage:3900";
+            var bucket    = configuration["Storage:BucketName"] ?? "nexus-attachments";
+            var region    = configuration["Storage:Region"] ?? "garage";
+            var publicUrl = configuration["Storage:PublicBaseUrl"] ?? string.Empty;
+
+            services.AddHttpClient("garage");
+            services.AddScoped<IAttachmentStorage>(sp => new GarageAttachmentStorage(
+                sp.GetRequiredService<IHttpClientFactory>(),
+                accessKey, secretKey, endpoint, bucket, region, publicUrl));
+        }
+        else
+        {
+            services.AddScoped<IAttachmentStorage, FileSystemAttachmentStorage>();
+        }
 
         return services;
     }
