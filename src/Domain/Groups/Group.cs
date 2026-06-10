@@ -12,6 +12,7 @@ public sealed class Group : Entity
     public Guid OwnerId { get; set; }
     public User Owner { get; set; } = null!;
     public DateTime Created { get; set; }
+    public DateTime? DeletedAt { get; set; }
     public List<GroupMember> Members { get; set; } = [];
     public List<GroupJoinRequest> JoinRequests { get; set; } = [];
 }

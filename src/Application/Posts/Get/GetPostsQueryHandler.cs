@@ -26,9 +26,10 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
         var baseQuery = context.Posts
             .Where(p => p.Deleted == null
                 && (p.GroupId == null
-                    || p.Group!.Visibility == GroupVisibility.Public
-                    || currentUserId.HasValue && context.GroupMembers
-                        .Any(m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value)))
+                    || p.Group!.DeletedAt == null
+                        && (p.Group.Visibility == GroupVisibility.Public
+                            || currentUserId.HasValue && context.GroupMembers
+                                .Any(m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value))))
             .OrderByDescending(p => p.Created);
 
         var totalCount = await baseQuery.CountAsync(cancellationToken);
