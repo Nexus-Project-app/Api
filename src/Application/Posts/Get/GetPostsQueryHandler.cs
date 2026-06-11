@@ -12,7 +12,6 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
 {
     public async Task<Result<PagedList<PostResponse>>> Handle(GetPostsQuery query, CancellationToken cancellationToken)
     {
-        // Résoudre l'ID DB de l'utilisateur courant à partir du sub Keycloak (si fourni)
         Guid? currentUserId = null;
         if (!string.IsNullOrEmpty(query.CurrentUserSub))
         {
@@ -22,15 +21,23 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        // Exclure posts de groupes privés dont l'utilisateur n'est pas membre
-        var baseQuery = context.Posts
+        var filtered = context.Posts
             .Where(p => p.Deleted == null
                 && (p.GroupId == null
                     || p.Group!.DeletedAt == null
                         && (p.Group.Visibility == GroupVisibility.Public
                             || currentUserId.HasValue && context.GroupMembers
-                                .Any(m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value))))
-            .OrderByDescending(p => p.Created);
+                                .Any(m => m.GroupId == p.GroupId && m.UserId == currentUserId.Value))));
+
+        if (!string.IsNullOrEmpty(query.Search))
+        {
+            var pattern = $"%{query.Search}%";
+            filtered = filtered.Where(p =>
+                EF.Functions.ILike(p.Title, pattern) ||
+                EF.Functions.ILike(p.Content, pattern));
+        }
+
+        var baseQuery = filtered.OrderByDescending(p => p.Created);
 
         var totalCount = await baseQuery.CountAsync(cancellationToken);
 
