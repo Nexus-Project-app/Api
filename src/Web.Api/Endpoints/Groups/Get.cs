@@ -19,7 +19,8 @@ internal sealed class Get : IEndpoint
             ClaimsPrincipal principal,
             IQueryHandler<GetGroupsQuery, PagedList<GroupSummaryResponse>> handler,
             IApplicationDbContext context,
-            CancellationToken cancellationToken) =>
+            CancellationToken cancellationToken,
+            string? search = null) =>
         {
             Guid? currentUserId = null;
             if (principal.Identity?.IsAuthenticated == true)
@@ -34,7 +35,7 @@ internal sealed class Get : IEndpoint
                 }
             }
 
-            GetGroupsQuery query = new(page, pageSize, currentUserId);
+            GetGroupsQuery query = new(page, pageSize, currentUserId, search);
             var result = await handler.Handle(query, cancellationToken);
             return result.Match(Results.Ok, CustomResults.Problem);
         })

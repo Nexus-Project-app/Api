@@ -11,8 +11,17 @@ internal sealed class GetGroupsQueryHandler(IApplicationDbContext context)
 {
     public async Task<Result<PagedList<GroupSummaryResponse>>> Handle(GetGroupsQuery query, CancellationToken cancellationToken)
     {
-        var baseQuery = context.Groups
-            .OrderByDescending(g => g.Created);
+        var filtered = context.Groups.AsQueryable();
+
+        if (!string.IsNullOrEmpty(query.Search))
+        {
+            var pattern = $"%{query.Search}%";
+            filtered = filtered.Where(g =>
+                EF.Functions.ILike(g.Name, pattern) ||
+                EF.Functions.ILike(g.Description, pattern));
+        }
+
+        var baseQuery = filtered.OrderByDescending(g => g.Created);
 
         var totalCount = await baseQuery.CountAsync(cancellationToken);
 
