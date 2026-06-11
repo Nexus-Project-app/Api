@@ -7,7 +7,5 @@ public sealed record GetPostsQuery(
     int Page,
     int PageSize,
     string? CurrentUserSub = null,
-    string? Search = null,
-    string? Tag = null,
-    string? Author = null
+    string? Search = null
 ) : IQuery<PagedList<PostResponse>>;

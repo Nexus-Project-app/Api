@@ -17,16 +17,13 @@ internal sealed class Get : IEndpoint
             ClaimsPrincipal principal,
             IQueryHandler<GetPostsQuery, PagedList<PostResponse>> handler,
             CancellationToken cancellationToken,
-            string? search = null,
-            string? tag = null,
-            string? author = null) =>
+            string? search = null) =>
         {
-            // Passe le sub Keycloak si l'utilisateur est authentifié pour calculer IsLikedByCurrentUser
             var currentUserSub = principal.Identity?.IsAuthenticated == true
                 ? principal.FindFirstValue(ClaimTypes.NameIdentifier)
                 : null;
 
-            var query = new GetPostsQuery(page, pageSize, currentUserSub, search, tag, author);
+            var query = new GetPostsQuery(page, pageSize, currentUserSub, search);
 
             var result = await handler.Handle(query, cancellationToken);
 

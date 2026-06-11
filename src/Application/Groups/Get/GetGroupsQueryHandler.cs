@@ -4,8 +4,6 @@ using Application.Common;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
 
-#pragma warning disable CA1308, CA1862
-
 namespace Application.Groups.Get;
 
 internal sealed class GetGroupsQueryHandler(IApplicationDbContext context)
@@ -17,10 +15,10 @@ internal sealed class GetGroupsQueryHandler(IApplicationDbContext context)
 
         if (!string.IsNullOrEmpty(query.Search))
         {
-            var searchLower = query.Search.ToLowerInvariant();
+            var pattern = $"%{query.Search}%";
             filtered = filtered.Where(g =>
-                g.Name.ToLowerInvariant().Contains(searchLower) ||
-                g.Description.ToLowerInvariant().Contains(searchLower));
+                EF.Functions.ILike(g.Name, pattern) ||
+                EF.Functions.ILike(g.Description, pattern));
         }
 
         var baseQuery = filtered.OrderByDescending(g => g.Created);

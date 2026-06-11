@@ -5,8 +5,6 @@ using Domain.Groups;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
 
-#pragma warning disable CA1308, CA1862
-
 namespace Application.Posts.Get;
 
 internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
@@ -33,25 +31,10 @@ internal sealed class GetPostsQueryHandler(IApplicationDbContext context)
 
         if (!string.IsNullOrEmpty(query.Search))
         {
-            var searchLower = query.Search.ToLowerInvariant();
+            var pattern = $"%{query.Search}%";
             filtered = filtered.Where(p =>
-                p.Title.ToLowerInvariant().Contains(searchLower) ||
-                p.Content.ToLowerInvariant().Contains(searchLower));
-        }
-
-        if (!string.IsNullOrEmpty(query.Tag))
-        {
-            var tagLower = query.Tag.ToLowerInvariant();
-            filtered = filtered.Where(p =>
-                p.Tags.Any(t => t.Name.ToLowerInvariant().Contains(tagLower)));
-        }
-
-        if (!string.IsNullOrEmpty(query.Author))
-        {
-            var authorLower = query.Author.ToLowerInvariant();
-            filtered = filtered.Where(p =>
-                p.Author.FirstName.ToLowerInvariant().Contains(authorLower) ||
-                p.Author.LastName.ToLowerInvariant().Contains(authorLower));
+                EF.Functions.ILike(p.Title, pattern) ||
+                EF.Functions.ILike(p.Content, pattern));
         }
 
         var baseQuery = filtered.OrderByDescending(p => p.Created);
